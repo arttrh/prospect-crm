@@ -16,7 +16,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={geist.className}>
-        <Theme accentColor="jade" grayColor="slate" radius="large" scaling="100%" appearance="dark">
+        <Theme accentColor="iris" grayColor="slate" radius="large" scaling="100%" appearance="dark" panelBackground="translucent">
           {children}
         </Theme>
       </body>
