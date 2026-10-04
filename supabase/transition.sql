@@ -103,3 +103,6 @@ revoke execute on function public.crm_v2_update_lead(text,text,text,jsonb) from 
 grant execute on function public.crm_v2_get_leads(text,text) to anon;
 grant execute on function public.crm_v2_import_leads(text,text,text,text,jsonb) to anon;
 grant execute on function public.crm_v2_update_lead(text,text,text,jsonb) to anon;
+
+-- This administrative helper is not part of the CRM API surface.
+revoke all on function public.rls_auto_enable() from public, anon, authenticated;
