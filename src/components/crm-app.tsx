@@ -5,7 +5,7 @@ import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSe
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Select from "@radix-ui/react-select";
 import * as Tabs from "@radix-ui/react-tabs";
-import { Button, Callout, Card, Flex, Heading, Text, TextArea, TextField } from "@radix-ui/themes";
+import { Button, Callout, Card, Flex, Heading, Text, TextArea, TextField, Theme } from "@radix-ui/themes";
 import {
   ArrowRight, Bot, Building2, CalendarClock, Camera, Check, ChevronDown, ExternalLink, GripVertical,
   LayoutDashboard, List, LoaderCircle, LogOut, Mail, MapPin, MessageCircle, Plus,
@@ -154,39 +154,41 @@ function LeadDialog({ lead, onClose, onSaved }: { lead: Lead | null; onClose: ()
   return (
     <Dialog.Root open={Boolean(lead)} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="dialog-overlay" />
-        <Dialog.Content className="dialog-content">
-          <div className="dialog-top">
-            <div><Text size="2" color="gray">{draft.segment}</Text><Dialog.Title>{draft.name}</Dialog.Title><Dialog.Description>{draft.address || "Endereço não informado"}</Dialog.Description></div>
-            <Dialog.Close className="icon-button"><X size={20} /></Dialog.Close>
-          </div>
-          <div className="dialog-grid">
-            <section className="lead-editor">
-              <div className="form-grid">
-                <label className="field-label">Status<RadixSelect value={draft.status} onValueChange={(value) => setDraft({ ...draft, status: value as LeadStatus })} options={LEAD_STATUSES.map((value) => ({ value, label: STATUS_LABELS[value] }))} label="Status" /></label>
-                <label className="field-label">Canal preferido<RadixSelect value={draft.preferredChannel || "NONE"} onValueChange={(value) => setDraft({ ...draft, preferredChannel: value === "NONE" ? null : value as ContactChannel })} options={[{ value: "NONE", label: "Não definido" }, ...availableChannels(draft).map((value) => ({ value, label: CHANNEL_LABELS[value] }))]} label="Canal preferido" /></label>
-                <label className="field-label">Próximo follow-up<TextField.Root type="datetime-local" value={draft.nextFollowUpAt?.slice(0, 16) || ""} onChange={(event) => setDraft({ ...draft, nextFollowUpAt: event.target.value ? new Date(event.target.value).toISOString() : null })} /></label>
-              </div>
-              <label className="field-label">Anotações<TextArea rows={4} value={draft.notes} onChange={(event) => setDraft({ ...draft, notes: event.target.value })} placeholder="Contexto da conversa, objeções e próximo passo..." /></label>
-              <Button variant="soft" onClick={() => save()} disabled={saving}>{saving ? <LoaderCircle className="spin" /> : <Check size={16} />} Salvar lead</Button>
-              <div className="lead-facts">
-                <span><Star size={15} /> {draft.rating ?? "—"} · {draft.reviews ?? 0} avaliações</span>
-                {draft.mapsUrl && <a href={draft.mapsUrl} target="_blank" rel="noreferrer"><MapPin size={15} /> Abrir no Maps <ExternalLink size={13} /></a>}
-              </div>
-            </section>
-            <section className="message-panel">
-              <div className="section-heading"><div><Text size="2" color="gray">Abordagem manual</Text><Heading size="4">Mensagem</Heading></div><Button variant="soft" onClick={generate} disabled={generating}>{generating ? <LoaderCircle className="spin" /> : <Sparkles size={16} />} Gemini Flash</Button></div>
-              <TextArea className="message-textarea" value={message} onChange={(event) => setMessage(event.target.value)} />
-              <div className="contact-actions">
-                {wa && <Button asChild color="green"><a href={wa} target="_blank" rel="noreferrer" onClick={() => contact("WHATSAPP")}><MessageCircle size={16} /> WhatsApp</a></Button>}
-                {mail && <Button asChild color="blue"><a href={mail} onClick={() => contact("EMAIL")}><Mail size={16} /> E-mail</a></Button>}
-                {insta && <Button asChild color="pink"><a href={insta} target="_blank" rel="noreferrer" onClick={() => contact("INSTAGRAM")}><Camera size={16} /> Copiar e abrir</a></Button>}
-              </div>
-              <Callout.Root color="amber" size="1"><Callout.Icon><ShieldCheck size={16} /></Callout.Icon><Callout.Text>Nenhuma mensagem é enviada automaticamente. Revise, personalize e envie você mesmo para reduzir risco de bloqueio.</Callout.Text></Callout.Root>
-              {notice && <Text size="2" color="gray">{notice}</Text>}
-            </section>
-          </div>
-        </Dialog.Content>
+        <Theme className="dialog-theme" accentColor="jade" grayColor="slate" radius="large" scaling="100%" appearance="dark">
+          <Dialog.Overlay className="dialog-overlay" />
+          <Dialog.Content className="dialog-content">
+            <div className="dialog-top">
+              <div><Text className="dialog-eyebrow" size="2">{draft.segment}</Text><Dialog.Title>{draft.name}</Dialog.Title><Dialog.Description>{draft.address || "Endereço não informado"}</Dialog.Description></div>
+              <Dialog.Close className="icon-button"><X size={20} /></Dialog.Close>
+            </div>
+            <div className="dialog-grid">
+              <section className="lead-editor">
+                <div className="form-grid">
+                  <label className="field-label">Status<RadixSelect value={draft.status} onValueChange={(value) => setDraft({ ...draft, status: value as LeadStatus })} options={LEAD_STATUSES.map((value) => ({ value, label: STATUS_LABELS[value] }))} label="Status" /></label>
+                  <label className="field-label">Canal preferido<RadixSelect value={draft.preferredChannel || "NONE"} onValueChange={(value) => setDraft({ ...draft, preferredChannel: value === "NONE" ? null : value as ContactChannel })} options={[{ value: "NONE", label: "Não definido" }, ...availableChannels(draft).map((value) => ({ value, label: CHANNEL_LABELS[value] }))]} label="Canal preferido" /></label>
+                  <label className="field-label followup-field">Próximo follow-up<TextField.Root type="datetime-local" value={draft.nextFollowUpAt?.slice(0, 16) || ""} onChange={(event) => setDraft({ ...draft, nextFollowUpAt: event.target.value ? new Date(event.target.value).toISOString() : null })} /></label>
+                </div>
+                <label className="field-label">Anotações<TextArea rows={4} value={draft.notes} onChange={(event) => setDraft({ ...draft, notes: event.target.value })} placeholder="Contexto da conversa, objeções e próximo passo..." /></label>
+                <Button className="save-lead-button" variant="soft" onClick={() => save()} disabled={saving}>{saving ? <LoaderCircle className="spin" /> : <Check size={16} />} Salvar lead</Button>
+                <div className="lead-facts">
+                  <span><Star size={15} /> {draft.rating ?? "—"} · {draft.reviews ?? 0} avaliações</span>
+                  {draft.mapsUrl && <a href={draft.mapsUrl} target="_blank" rel="noreferrer"><MapPin size={15} /> Abrir no Maps <ExternalLink size={13} /></a>}
+                </div>
+              </section>
+              <section className="message-panel">
+                <div className="section-heading"><div><Text className="dialog-eyebrow" size="2">Abordagem manual</Text><Heading size="4">Mensagem</Heading></div><Button variant="soft" onClick={generate} disabled={generating}>{generating ? <LoaderCircle className="spin" /> : <Sparkles size={16} />} Gemini Flash</Button></div>
+                <TextArea className="message-textarea" value={message} onChange={(event) => setMessage(event.target.value)} />
+                <div className="contact-actions">
+                  {wa && <Button asChild color="green"><a href={wa} target="_blank" rel="noreferrer" onClick={() => contact("WHATSAPP")}><MessageCircle size={16} /> WhatsApp</a></Button>}
+                  {mail && <Button asChild color="blue"><a href={mail} onClick={() => contact("EMAIL")}><Mail size={16} /> E-mail</a></Button>}
+                  {insta && <Button asChild color="pink"><a href={insta} target="_blank" rel="noreferrer" onClick={() => contact("INSTAGRAM")}><Camera size={16} /> Copiar e abrir</a></Button>}
+                </div>
+                <Callout.Root className="manual-warning" color="amber" size="1"><Callout.Icon><ShieldCheck size={16} /></Callout.Icon><Callout.Text>Nenhuma mensagem é enviada automaticamente. Revise, personalize e envie você mesmo para reduzir risco de bloqueio.</Callout.Text></Callout.Root>
+                {notice && <Text size="2" color="gray">{notice}</Text>}
+              </section>
+            </div>
+          </Dialog.Content>
+        </Theme>
       </Dialog.Portal>
     </Dialog.Root>
   );
