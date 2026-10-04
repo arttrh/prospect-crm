@@ -7,11 +7,12 @@ import * as Select from "@radix-ui/react-select";
 import * as Tabs from "@radix-ui/react-tabs";
 import { Button, Callout, Card, Flex, Heading, Text, TextArea, TextField, Theme } from "@radix-ui/themes";
 import {
-  ArrowRight, Bot, Building2, CalendarClock, Camera, Check, ChevronDown, ExternalLink, GripVertical,
+  ArrowRight, Bot, Building2, CalendarClock, Camera, Check, ChevronDown, Code2, Copy, ExternalLink, GripVertical,
   LayoutDashboard, List, LoaderCircle, LogOut, Mail, MapPin, MessageCircle, Plus,
   RefreshCw, Search, ShieldCheck, Sparkles, Star, X,
 } from "lucide-react";
 import { availableChannels, defaultMessage, emailUrl, instagramUrl, whatsappUrl } from "@/lib/contact";
+import { clientSiteBrief, SITE_TEMPLATE } from "@/lib/site-template";
 import { LEAD_STATUSES, STATUS_LABELS, type ContactChannel, type ImportResult, type Lead, type LeadStatus } from "@/lib/types";
 
 const KANBAN_STATUSES: LeadStatus[] = ["NEW", "SENT", "FOLLOW_UP", "REPLIED", "SITE_SENT", "MEETING", "WON", "DISQUALIFIED"];
@@ -149,6 +150,10 @@ function LeadDialog({ lead, onClose, onSaved }: { lead: Lead | null; onClose: ()
     const nextStatus = draft!.status === "NEW" ? "SENT" : draft!.status;
     await save({ status: nextStatus, preferredChannel: channel, lastContactAt: new Date().toISOString() });
   }
+  async function copySiteBrief() {
+    await navigator.clipboard.writeText(clientSiteBrief(draft!));
+    setNotice("Briefing do site copiado. O template e a estrutura visual permanecem protegidos.");
+  }
   const wa = whatsappUrl(draft, message); const mail = emailUrl(draft, message); const insta = instagramUrl(draft);
 
   return (
@@ -173,6 +178,18 @@ function LeadDialog({ lead, onClose, onSaved }: { lead: Lead | null; onClose: ()
                 <div className="lead-facts">
                   <span><Star size={15} /> {draft.rating ?? "—"} · {draft.reviews ?? 0} avaliações</span>
                   {draft.mapsUrl && <a href={draft.mapsUrl} target="_blank" rel="noreferrer"><MapPin size={15} /> Abrir no Maps <ExternalLink size={13} /></a>}
+                </div>
+                <div className="site-template-card">
+                  <div className="site-template-heading">
+                    <span className="template-icon"><Code2 size={17} /></span>
+                    <div><strong>{SITE_TEMPLATE.name}</strong><span>{SITE_TEMPLATE.stack} · padrão oficial</span></div>
+                  </div>
+                  <p>Personalização limitada aos dados e imagens do cliente. Layout, componentes e animações ficam protegidos.</p>
+                  <div className="site-template-actions">
+                    <Button asChild variant="soft" size="2"><a href={SITE_TEMPLATE.previewUrl} target="_blank" rel="noreferrer">Ver modelo <ExternalLink size={14} /></a></Button>
+                    <Button variant="soft" size="2" onClick={copySiteBrief}><Copy size={14} /> Copiar briefing</Button>
+                  </div>
+                  <a className="template-source" href={SITE_TEMPLATE.repositoryUrl} target="_blank" rel="noreferrer">Código-fonte autorizado <ExternalLink size={12} /></a>
                 </div>
               </section>
               <section className="message-panel">
