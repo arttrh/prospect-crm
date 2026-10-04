@@ -112,7 +112,7 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
         <Text color="gray">Seus leads, canais e follow-ups em um só lugar.</Text>
         <label className="field-label">Senha de acesso<TextField.Root type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Digite sua senha" autoFocus /></label>
         {error && <Text color="red" size="2">{error}</Text>}
-        <Button size="3" disabled={loading}>{loading ? <LoaderCircle className="spin" /> : "Entrar"}</Button>
+        <Button type="submit" size="3" disabled={loading}>{loading ? <LoaderCircle className="spin" /> : "Entrar"}</Button>
       </form>
     </main>
   );
