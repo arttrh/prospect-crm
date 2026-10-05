@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { apiError, requireAuth } from "@/lib/api";
 import { getSiteDraft, listLeads, saveSiteDraft } from "@/lib/db";
 import { SITE_CONTENT_FALLBACK, siteGenerationPrompt } from "@/lib/site-template";
-import type { SiteContent } from "@/lib/types";
+import type { Lead, SiteContent } from "@/lib/types";
 
 export const runtime = "nodejs";
 
@@ -10,14 +10,21 @@ function slugify(value: string): string {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 54);
 }
 
-function cleanContent(value: Partial<SiteContent>): SiteContent {
+function cleanContent(value: Partial<SiteContent>, lead: Lead): SiteContent {
   const text = (candidate: unknown, fallback: string, max = 220) => typeof candidate === "string" && candidate.trim() ? candidate.trim().slice(0, max) : fallback;
+  // Maps supplies category/address, not verified credentials, equipment or treatment lists.
+  const unknownClaims = /especializa|profission|estruturad|qualidade|equipament|\b(?:\d+\s+anos|experiência|equipe|tecnologia|tratamentos|implantes|ortodontia|clareamento)\b/i;
+  const factualAbout = `${lead.name} é um estabelecimento da categoria ${lead.category || lead.segment}${lead.address ? ", localizado em " + lead.address : ""}. Entre em contato para confirmar serviços, horários e disponibilidade.`;
+  const grounded = (candidate: unknown, fallback: string, max: number) => {
+    const result = text(candidate, fallback, max);
+    return unknownClaims.test(result) ? fallback : result;
+  };
   return {
     eyebrow: text(value.eyebrow, SITE_CONTENT_FALLBACK.eyebrow, 90),
     headline: text(value.headline, SITE_CONTENT_FALLBACK.headline, 150),
-    description: text(value.description, SITE_CONTENT_FALLBACK.description, 260),
+    description: grounded(value.description, `${lead.category || lead.segment}. Conheça a localização e entre em contato.`, 260),
     aboutTitle: text(value.aboutTitle, SITE_CONTENT_FALLBACK.aboutTitle, 110),
-    aboutText: text(value.aboutText, SITE_CONTENT_FALLBACK.aboutText, 520),
+    aboutText: grounded(value.aboutText, factualAbout, 520),
     services: [],
     differentials: [],
     ctaTitle: text(value.ctaTitle, SITE_CONTENT_FALLBACK.ctaTitle, 100),
@@ -72,7 +79,7 @@ export async function POST(request: NextRequest) {
     if (!raw || payload?.candidates?.[0]?.finishReason === "MAX_TOKENS") throw new Error("Gemini não retornou conteúdo completo. Tente novamente.");
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Resposta inválida do Gemini.");
-    const content = cleanContent(parsed);
+    const content = cleanContent(parsed, lead);
     const stableSuffix = Buffer.from(lead.id).toString("base64url").slice(0, 7).toLowerCase();
     const slug = `${slugify(lead.name) || "empresa"}-${stableSuffix}`;
     const draft = await saveSiteDraft({ leadId: lead.id, slug, content, heroImage: lead.imageUrl, galleryImages: lead.imageUrl ? [lead.imageUrl] : [] });
