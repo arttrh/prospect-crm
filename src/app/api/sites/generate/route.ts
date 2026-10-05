@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     if (!lead) return NextResponse.json({ error: "Lead não encontrado" }, { status: 404 });
     if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: "Gemini não está configurado no backend" }, { status: 503 });
 
-    const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+    const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
       headers: { "content-type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
