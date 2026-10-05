@@ -1,4 +1,4 @@
-import type { Lead } from "./types";
+import type { Lead, SiteContent } from "./types";
 
 export const SITE_TEMPLATE = {
   id: "diego-astro-premium-v1",
@@ -11,37 +11,35 @@ export const SITE_TEMPLATE = {
   protectedPaths: ["src/components", "src/layouts", "src/pages", "src/styles"],
 } as const;
 
-export function clientSiteBrief(lead: Lead): string {
-  const contact = {
-    phone: lead.phone,
-    whatsapp: lead.whatsapp,
-    email: lead.email,
-    instagram: lead.instagram,
-  };
+export const SITE_CONTENT_FALLBACK: SiteContent = {
+  eyebrow: "Atendimento profissional e próximo",
+  headline: "Cuidado, confiança e excelência em cada atendimento.",
+  description: "Conheça o espaço, os serviços e as formas de contato.",
+  aboutTitle: "Uma experiência pensada para você",
+  aboutText: "Informações claras e atendimento próximo para ajudar você a escolher com segurança.",
+  services: [],
+  differentials: [],
+  ctaTitle: "Vamos conversar?",
+  ctaText: "Entre em contato para tirar dúvidas e conhecer as opções de atendimento.",
+  ctaLabel: "Falar pelo WhatsApp",
+  metaTitle: "Atendimento profissional",
+  metaDescription: "Conheça os serviços, a localização e as formas de contato.",
+};
 
-  return `Adapte o template ${SITE_TEMPLATE.repositoryUrl} para este cliente.
+export function siteGenerationPrompt(lead: Lead): string {
+  return `Crie o conteúdo de uma landing page premium em português do Brasil para a empresa abaixo.
+Use o padrão estrutural do template Astro autorizado: hero, apresentação, serviços, diferenciais, localização e CTA.
+Retorne APENAS JSON válido, sem markdown, exatamente com estas chaves:
+{"eyebrow":"","headline":"","description":"","aboutTitle":"","aboutText":"","services":[{"title":"","description":""}],"differentials":[{"title":"","description":""}],"ctaTitle":"","ctaText":"","ctaLabel":"","metaTitle":"","metaDescription":""}
 
-REGRA OBRIGATÓRIA
-Edite somente src/config/site.ts e substitua os assets necessários em public/images.
-Não altere componentes, páginas, estilos, classes CSS, breakpoints, animações ou estrutura visual.
-Use imagens próprias ou autorizadas pelo cliente. Não reutilize nome, textos, fotos, avaliações ou identidade da demonstração original.
+Regras: não invente profissionais, certificações, tempo de mercado, tratamentos, preços, resultados ou avaliações. Use no máximo 4 serviços e 3 diferenciais. Se um dado não estiver disponível, escreva de forma institucional e genérica, sem afirmar fatos. Não mencione IA, template, Google Maps nem prospecção.
 
-DADOS DO LEAD
-${JSON.stringify({
-  name: lead.name,
-  segment: lead.segment,
-  category: lead.category,
-  address: lead.address,
-  city: lead.city,
-  neighborhood: lead.neighborhood,
-  contact,
-  mapsUrl: lead.mapsUrl,
-  imageReference: lead.imageUrl,
-  rating: lead.rating,
-  reviews: lead.reviews,
-}, null, 2)}
-
-Atualize identidade, contato, hero, serviços, apresentação, diferenciais, localização, SEO, JSON-LD, textos alternativos e dados de descoberta por IA.
-Desative por feature flag qualquer seção sem dados confiáveis. Não invente profissionais, certificações, serviços, avaliações ou resultados.
-Ao terminar, execute pnpm build, pnpm test:reviews e pnpm test:deploy e informe os dados ainda ausentes.`;
+Empresa: ${lead.name}
+Segmento: ${lead.segment}
+Categoria: ${lead.category || "não informada"}
+Endereço: ${lead.address || "não informado"}
+Cidade: ${lead.city || "não informada"}
+Bairro: ${lead.neighborhood || "não informado"}
+Nota pública: ${lead.rating ?? "não informada"}
+Quantidade de avaliações: ${lead.reviews ?? "não informada"}`;
 }

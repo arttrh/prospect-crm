@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { DEMO_LEADS } from "./demo-data";
 import { isContactable } from "./contact";
-import type { ImportResult, Lead, LeadPatch } from "./types";
+import type { ImportResult, Lead, LeadPatch, SiteContent, SiteDraft } from "./types";
 
 type DbProvider = "oracle" | "supabase-transition" | "demo";
 
@@ -162,4 +162,26 @@ export async function importLeads(datasetId: string, segment: string, candidates
     }
   }
   return { ...stats, imported: valid.length };
+}
+
+export async function getSiteDraft(leadId: string): Promise<SiteDraft | null> {
+  if (provider() !== "supabase-transition") return null;
+  return supabaseRpc<SiteDraft | null>("crm_v2_get_site_draft", { p_lead_id: leadId });
+}
+
+export async function getSiteDraftBySlug(slug: string): Promise<SiteDraft | null> {
+  if (provider() !== "supabase-transition") return null;
+  return supabaseRpc<SiteDraft | null>("crm_v2_get_site_draft_by_slug", { p_slug: slug });
+}
+
+export async function saveSiteDraft(input: { leadId: string; slug: string; content: SiteContent; heroImage: string | null; galleryImages: string[] }): Promise<SiteDraft> {
+  if (provider() !== "supabase-transition") throw new Error("A geração de sites precisa do banco Supabase configurado.");
+  return supabaseRpc<SiteDraft>("crm_v2_upsert_site_draft", {
+    p_lead_id: input.leadId,
+    p_slug: input.slug,
+    p_template_id: "diego-astro-premium-v1",
+    p_content: input.content,
+    p_hero_image: input.heroImage,
+    p_gallery_images: input.galleryImages,
+  });
 }

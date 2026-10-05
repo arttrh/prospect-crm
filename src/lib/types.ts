@@ -65,3 +65,31 @@ export interface ImportResult {
   discardedNoContact: number;
   discardedWithWebsite: number;
 }
+
+export interface SiteContent {
+  eyebrow: string;
+  headline: string;
+  description: string;
+  aboutTitle: string;
+  aboutText: string;
+  services: Array<{ title: string; description: string }>;
+  differentials: Array<{ title: string; description: string }>;
+  ctaTitle: string;
+  ctaText: string;
+  ctaLabel: string;
+  metaTitle: string;
+  metaDescription: string;
+}
+
+export interface SiteDraft {
+  leadId: string;
+  slug: string;
+  templateId: string;
+  status: "DRAFT" | "PUBLISHED";
+  content: SiteContent;
+  heroImage: string | null;
+  galleryImages: string[];
+  previewUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
