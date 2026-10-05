@@ -48,15 +48,26 @@ export async function POST(request: NextRequest) {
     if (!lead) return NextResponse.json({ error: "Lead não encontrado" }, { status: 404 });
     if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: "Gemini não está configurado no backend" }, { status: 503 });
 
-    const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
-      body: JSON.stringify({ contents: [{ parts: [{ text: siteGenerationPrompt(lead) }] }], generationConfig: { temperature: 0.2, maxOutputTokens: 2400, responseMimeType: "application/json" } }),
-      cache: "no-store",
-    });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload?.error?.message || `Gemini respondeu ${response.status}`);
+    let model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+    let payload;
+    const models = [...new Set([model, "gemini-flash-lite-latest"])];
+    for (let index = 0; index < models.length; index++) {
+      model = models[index];
+      let response: Response;
+      try { response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
+        body: JSON.stringify({ contents: [{ parts: [{ text: siteGenerationPrompt(lead) }] }], generationConfig: { temperature: 0.2, maxOutputTokens: 2400, responseMimeType: "application/json" } }),
+        signal: AbortSignal.timeout(22000), cache: "no-store",
+      }); } catch {
+        if (index + 1 < models.length) continue;
+        return NextResponse.json({ error: "Gemini temporariamente indisponível. Sua prévia anterior foi preservada." }, { status: 503 });
+      }
+      payload = await response.json();
+      if (response.ok) break;
+      if ([429, 503].includes(response.status) && index + 1 < models.length) continue;
+      return NextResponse.json({ error: payload?.error?.message || `Gemini respondeu ${response.status}` }, { status: response.status === 429 ? 429 : 503 });
+    }
     const raw = payload?.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text || "").join("").trim();
     if (!raw || payload?.candidates?.[0]?.finishReason === "MAX_TOKENS") throw new Error("Gemini não retornou conteúdo completo. Tente novamente.");
     const parsed = JSON.parse(raw);
