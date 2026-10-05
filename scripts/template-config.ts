@@ -43,7 +43,7 @@ export const siteConfig: SiteConfig = {
     ],
   },
   practiceSection: {
-    id: original.practiceSection.id, title: 'Conheça o estabelecimento', highlightedTitle: 'e entre em contato.',
+    id: original.practiceSection.id, title: 'Conheça o estabelecimento', highlightedTitle: 'informações claras.',
     description: 'Confira as informações disponíveis. Serviços, equipe e horários devem ser confirmados diretamente com o estabelecimento.',
     items: ['circle-check', 'map-pin', 'star', 'message-circle'].map((icon, index) => ({
       icon: 'lucide:' + icon, title: token('SERVICE_' + index + '_TITLE'), description: token('SERVICE_' + index + '_DESCRIPTION'),

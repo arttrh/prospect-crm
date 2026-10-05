@@ -29,10 +29,10 @@ export function leadContactUrl(lead: Lead): string {
 }
 
 function brandLogo(lead: Lead): string {
-  const label = lead.name.length > 38 ? lead.name.slice(0, 35) + "…" : lead.name;
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="100" viewBox="0 0 480 100">' +
-    '<text x="0" y="48" fill="#172b49" font-family="Arial,sans-serif" font-weight="700" font-size="23">' + escapeHtml(label) + '</text>' +
-    '<text x="0" y="78" fill="#526781" font-family="Arial,sans-serif" font-size="14">' + escapeHtml(lead.category || lead.segment) + '</text></svg>';
+  const label = lead.name.length > 30 ? lead.name.slice(0, 27) + "…" : lead.name;
+  const fontSize = Math.min(26, Math.floor(510 / label.length));
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="330" height="48" viewBox="0 0 330 48">' +
+    '<text x="0" y="32" fill="#ffffff" font-family="Arial,sans-serif" font-weight="700" font-size="' + fontSize + '">' + escapeHtml(label) + '</text></svg>';
   return "data:image/svg+xml;base64," + Buffer.from(svg).toString("base64");
 }
 
@@ -49,7 +49,8 @@ export async function renderDiegoSite(lead: Lead, draft: SiteDraft, origin: stri
   const mapsQuery = [lead.name, lead.address || [lead.neighborhood, lead.city].filter(Boolean).join(", ")].filter(Boolean).join(", ");
   const rating = lead.rating === null ? "—" : lead.rating.toLocaleString("pt-BR");
   const reviews = lead.reviews === null ? "—" : String(lead.reviews);
-  const ratingLabel = lead.rating === null ? "Conheça " + lead.name : "Nota " + rating + " no Google" + (lead.reviews !== null ? ", com " + reviews + " avaliações" : "");
+  const ratingLabel = lead.rating === null ? "Conheça " + lead.name : "Nota " + rating + " no Google" + (lead.reviews !== null ? ", com " + reviews + (lead.reviews === 1 ? " avaliação" : " avaliações") : "");
+  const city = lead.city || lead.address?.match(/,\s*([^,]+?)\s*-\s*[A-Z]{2}(?:,|$)/)?.[1]?.trim() || "A confirmar";
   const contactLabel = lead.whatsapp ? "WhatsApp: " + (lead.phone || lead.whatsapp) : lead.email ? "E-mail: " + lead.email : lead.instagram ? "Instagram: " + lead.instagram : "Confira a localização e as opções de contato.";
   const address = lead.address || [lead.neighborhood, lead.city].filter(Boolean).join(" · ") || "Endereço a confirmar";
   const ctaLabel = lead.whatsapp ? "Falar pelo WhatsApp" : lead.email ? "Enviar e-mail" : lead.instagram ? "Abrir Instagram" : "Entrar em contato";
@@ -65,7 +66,7 @@ export async function renderDiegoSite(lead: Lead, draft: SiteDraft, origin: stri
     HEADLINE: content.headline, DESCRIPTION: content.description,
     ABOUT_TITLE: content.aboutTitle, ABOUT_TEXT: content.aboutText,
     HERO_IMAGE: heroImage, ABOUT_IMAGE: aboutImage, LOGO: brandLogo(lead),
-    ADDRESS: address, CITY: lead.city || "A confirmar", NEIGHBORHOOD: lead.neighborhood || "A confirmar",
+    ADDRESS: address, CITY: city, NEIGHBORHOOD: lead.neighborhood || "A confirmar",
     RATING: rating, REVIEWS: reviews, RATING_LABEL: ratingLabel,
     CONTACT_URL: leadContactUrl(lead), CONTACT_LABEL: contactLabel, CTA_LABEL: ctaLabel,
     CTA_TITLE: content.ctaTitle, CTA_TEXT: content.ctaText,

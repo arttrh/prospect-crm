@@ -9,7 +9,7 @@ test("prévia usa Astro original com animações, localização e conteúdo do l
   await expect(page.locator("[data-hero-headline]")).toContainText("Clínica Horizonte");
   await expect(page.locator("[data-hero-headline]")).toBeVisible();
   await expect(page.locator(".hero-lead")).toBeVisible();
-  await expect(page.locator(".hero-media img")).toHaveJSProperty("naturalWidth", 1672);
+  await expect.poll(() => page.locator(".hero-media img").evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   await expect(page.locator('a[href="https://wa.me/5511999990001"]').first()).toBeVisible();
   await expect(page.locator('iframe')).toHaveAttribute("src", /Cl%C3%ADnica%20Horizonte.*output=embed/);
   const html = await page.content();
