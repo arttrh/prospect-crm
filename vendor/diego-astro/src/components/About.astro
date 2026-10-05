@@ -1,0 +1,49 @@
+---
+import { Icon } from 'astro-icon/components';
+import { siteConfig } from '@/config/site';
+
+const { about, identity } = siteConfig;
+const bioText = identity.professionalDescription;
+const bioWords = bioText.split(' ');
+const aboutSrcset = about.image.srcset.map(({ src, width }) => `${src} ${width}w`).join(', ');
+---
+
+<section class="section about" id={about.id}>
+  <div class="container about-grid">
+    <figure class="profile-card" data-reveal>
+      <picture>
+        <source
+          type="image/webp"
+          srcset={aboutSrcset}
+          sizes={about.image.sizes}
+        />
+        <img
+          class="profile-image"
+          src={about.image.src}
+          width={about.image.width}
+          height={about.image.height}
+          alt={about.image.alt}
+          loading="lazy"
+          decoding="async"
+        />
+      </picture>
+      <figcaption>
+        <span>{about.cardName}</span>
+        <small>{about.cardDetail}</small>
+      </figcaption>
+    </figure>
+
+    <div class="about-copy" data-reveal>
+      <p class="section-kicker spotlight-text">{about.eyebrow}</p>
+      <p class="about-bio" data-scroll-text>
+        <span class="sr-only">{bioText}</span>
+        {bioWords.map((word, index) => (
+          <span class="reveal-word" aria-hidden="true">{word}{index < bioWords.length - 1 ? ' ' : ''}</span>
+        ))}
+      </p>
+      <ul class="credentials">
+        {about.credentials.map((credential) => <li><Icon name={credential.icon} aria-hidden="true" /><span>{credential.text}</span></li>)}
+      </ul>
+    </div>
+  </div>
+</section>

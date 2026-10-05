@@ -1,0 +1,54 @@
+---
+import { Icon } from 'astro-icon/components';
+import ArrowUpRightIcon from '@/components/ArrowUpRightIcon.astro';
+import { siteConfig } from '@/config/site';
+
+const { contact, differentialsSection: section } = siteConfig;
+---
+
+<section class="section differentials" id={section.id}>
+  <div class="container">
+    <div class="section-heading section-heading-narrow" data-reveal>
+      <h2 class="spotlight-text">{section.titlePrefix} <span>{section.highlightedTitle}</span><br />{section.titleSuffix}</h2>
+    </div>
+
+    <div class="differentials-slider" data-differentials-slider>
+      <div class="difference-stage" data-reveal aria-live="polite">
+        {section.items.map((slide, index) => (
+          <article
+            class:list={['featured-difference', { 'is-active': index === 0 }]}
+            id={`diferencial-card-${index + 1}`}
+            data-difference-slide
+            hidden={index !== 0}
+          >
+            <span class="feature-mark" aria-hidden="true" data-motion-item><Icon name={slide.icon} /></span>
+            <h3 data-motion-item>{slide.title}</h3>
+            <p data-motion-item>{slide.description}</p>
+            <a class="card-cta" href={contact.whatsappUrl} target="_blank" rel="noreferrer" data-motion-item>
+              <span>{section.ctaLabel}</span>
+              <b aria-hidden="true"><ArrowUpRightIcon /></b>
+            </a>
+          </article>
+        ))}
+      </div>
+
+      <div class="difference-tabs" role="tablist" aria-label={section.tabsLabel} data-reveal>
+        {section.items.map((slide, index) => (
+          <button
+            class:list={['difference-tab', { 'is-active': index === 0 }]}
+            type="button"
+            role="tab"
+            aria-selected={index === 0 ? 'true' : 'false'}
+            aria-controls={`diferencial-card-${index + 1}`}
+            tabindex={index === 0 ? '0' : '-1'}
+            data-difference-tab
+            data-index={index}
+          >
+            <span>{String(index + 1).padStart(2, '0')}</span>
+            <p>{slide.title}</p>
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>

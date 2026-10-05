@@ -1,0 +1,568 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import Hero from '@/components/Hero.astro';
+import Stats from '@/components/Stats.astro';
+import About from '@/components/About.astro';
+import VideoSection from '@/components/VideoSection.astro';
+import PracticeGrid from '@/components/PracticeGrid.astro';
+import UrgencySection from '@/components/UrgencySection.astro';
+import Differentials from '@/components/Differentials.astro';
+import ProcessJourney from '@/components/ProcessJourney.astro';
+import Reviews from '@/components/Reviews.astro';
+import FAQ from '@/components/FAQ.astro';
+import LocationSection from '@/components/LocationSection.astro';
+import Footer from '@/components/Footer.astro';
+import { siteConfig } from '@/config/site';
+
+const { enabled: videoSectionEnabled, ...videoSectionProps } = siteConfig.videoSection;
+const { enabled: locationSectionEnabled, ...locationSectionProps } = siteConfig.locationSection;
+---
+
+<BaseLayout
+  title={siteConfig.seo.homePageTitle}
+  description={siteConfig.seo.defaultDescription}
+  faqItems={siteConfig.faqSection.items}
+>
+  <Header />
+  <main>
+    <Hero />
+    <Stats />
+    <About />
+    {videoSectionEnabled && <VideoSection {...videoSectionProps} />}
+    <PracticeGrid />
+    <UrgencySection />
+    <Differentials />
+    <ProcessJourney />
+    {siteConfig.reviewsSection.enabled && <Reviews />}
+    <FAQ />
+    {locationSectionEnabled && <LocationSection {...locationSectionProps} />}
+  </main>
+  <Footer />
+
+  <script>
+    const header = document.querySelector<HTMLElement>('[data-header]');
+    const menuButton = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+    const mobileMenu = document.querySelector<HTMLElement>('[data-mobile-menu]');
+
+    const closeMenu = () => {
+      menuButton?.setAttribute('aria-expanded', 'false');
+      mobileMenu?.classList.remove('is-open');
+      document.body.classList.remove('menu-open');
+    };
+
+    menuButton?.addEventListener('click', () => {
+      const isOpen = menuButton.getAttribute('aria-expanded') === 'true';
+      menuButton.setAttribute('aria-expanded', String(!isOpen));
+      mobileMenu?.classList.toggle('is-open', !isOpen);
+      document.body.classList.toggle('menu-open', !isOpen);
+    });
+
+    mobileMenu?.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMenu));
+    window.addEventListener('scroll', () => header?.classList.toggle('is-scrolled', window.scrollY > 24), { passive: true });
+
+    const whatsappContact = document.querySelector<HTMLElement>('[data-whatsapp-contact]');
+    const whatsappInvite = whatsappContact?.querySelector<HTMLElement>('[data-whatsapp-invite]');
+    const whatsappClose = whatsappContact?.querySelector<HTMLButtonElement>('[data-whatsapp-close]');
+    const whatsappButton = whatsappContact?.querySelector<HTMLButtonElement>('.floating-whatsapp');
+    let whatsappInviteDismissed = false;
+
+    const showWhatsappInvite = (force = false) => {
+      if (whatsappInviteDismissed && !force) return;
+      whatsappInvite?.classList.add('is-visible');
+      whatsappButton?.setAttribute('aria-expanded', 'true');
+    };
+
+    const hideWhatsappInvite = () => {
+      whatsappInvite?.classList.remove('is-visible');
+      whatsappButton?.setAttribute('aria-expanded', 'false');
+    };
+
+    window.setTimeout(showWhatsappInvite, 1400);
+    whatsappButton?.addEventListener('mouseenter', () => showWhatsappInvite());
+    whatsappButton?.addEventListener('focus', () => showWhatsappInvite());
+    whatsappButton?.addEventListener('click', () => {
+      const isOpen = whatsappButton.getAttribute('aria-expanded') === 'true';
+      if (isOpen) hideWhatsappInvite();
+      else showWhatsappInvite(true);
+    });
+    whatsappClose?.addEventListener('click', () => {
+      whatsappInviteDismissed = true;
+      hideWhatsappInvite();
+      whatsappButton?.focus();
+    });
+    document.addEventListener('pointerdown', (event) => {
+      if (whatsappContact && !whatsappContact.contains(event.target as Node)) hideWhatsappInvite();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && whatsappButton?.getAttribute('aria-expanded') === 'true') {
+        hideWhatsappInvite();
+        whatsappButton.focus();
+      }
+    });
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    type AnimationTools = {
+      gsap: (typeof import('gsap'))['gsap'];
+      SplitText: (typeof import('gsap/SplitText'))['SplitText'];
+    };
+
+    let animationToolsPromise: Promise<AnimationTools> | undefined;
+    const loadAnimationTools = () => {
+      animationToolsPromise ??= Promise.all([
+        import('gsap'),
+        import('gsap/SplitText'),
+      ]).then(([gsapModule, splitTextModule]) => {
+        const { gsap } = gsapModule;
+        const { SplitText } = splitTextModule;
+        gsap.registerPlugin(SplitText);
+        return { gsap, SplitText };
+      });
+
+      return animationToolsPromise;
+    };
+
+    const heroHeadline = document.querySelector<HTMLElement>('[data-hero-headline]');
+    const heroDescription = document.querySelector<HTMLElement>('[data-hero-description]');
+
+    if (heroHeadline && heroDescription && !reduceMotion) {
+      const initializeHeroText = async () => {
+        const { gsap, SplitText } = await loadAnimationTools();
+
+        SplitText.create(heroHeadline, {
+            type: 'words,chars',
+            mask: 'chars',
+            charsClass: 'hero-char',
+            wordsClass: 'hero-word',
+            aria: 'none',
+            onSplit(self) {
+              gsap.set(heroHeadline, { visibility: 'visible' });
+              return gsap.from(self.chars, {
+                yPercent: 108,
+                autoAlpha: 0,
+                filter: 'blur(8px)',
+                rotationX: -24,
+                transformOrigin: '50% 100%',
+                willChange: 'transform,opacity,filter',
+                duration: .78,
+                delay: .12,
+                stagger: { each: .016, from: 'start' },
+                ease: 'power4.out',
+                onComplete: () => gsap.set(self.chars, { clearProps: 'willChange' }),
+              });
+            },
+          });
+
+          SplitText.create(heroDescription, {
+            type: 'lines',
+            mask: 'lines',
+            linesClass: 'hero-line',
+            autoSplit: true,
+            aria: 'none',
+            onSplit(self) {
+              gsap.set(heroDescription, { visibility: 'visible' });
+              return gsap.from(self.lines, {
+                yPercent: 105,
+                autoAlpha: 0,
+                filter: 'blur(6px)',
+                willChange: 'transform,opacity,filter',
+                duration: .72,
+                delay: 1.02,
+                stagger: .11,
+                ease: 'power3.out',
+                onComplete: () => gsap.set(self.lines, { clearProps: 'willChange' }),
+              });
+            },
+          });
+      };
+
+      window.requestAnimationFrame(() => {
+        initializeHeroText().catch(() => {
+          heroHeadline.style.visibility = 'visible';
+          heroDescription.style.visibility = 'visible';
+        });
+      });
+    } else {
+      if (heroHeadline) heroHeadline.style.visibility = 'visible';
+      if (heroDescription) heroDescription.style.visibility = 'visible';
+    }
+
+    const spotlightElements = [...document.querySelectorAll<HTMLElement>('.spotlight-text')];
+
+    if (reduceMotion) {
+      spotlightElements.forEach((element) => {
+        element.style.opacity = '1';
+      });
+    } else {
+      const spotlightObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+
+          const element = entry.target as HTMLElement;
+          spotlightObserver.unobserve(element);
+
+          loadAnimationTools().then(({ gsap, SplitText }) => {
+        const split = SplitText.create(element, {
+          type: 'words,chars',
+          charsClass: 'spotlight-char',
+          wordsClass: 'spotlight-word',
+          aria: 'none',
+        });
+
+        gsap.set(element, { opacity: 1 });
+        gsap.from(split.chars, {
+          opacity: .1,
+          scale: .8,
+          filter: 'blur(4px)',
+          willChange: 'transform,opacity,filter',
+          stagger: { each: .03, from: 'center' },
+          duration: .4,
+          ease: 'power2.out',
+          onComplete: () => gsap.set(split.chars, { clearProps: 'willChange' }),
+        });
+          }).catch(() => {
+            element.style.opacity = '1';
+          });
+        });
+      }, { threshold: 0.05, rootMargin: '0px 0px -8% 0px' });
+
+      spotlightElements.forEach((element) => spotlightObserver.observe(element));
+    }
+
+    const faqItems = [...document.querySelectorAll<HTMLDetailsElement>('[data-faq-list] details')];
+    let faqIsTransitioning = false;
+
+    const animateFaq = async (item: HTMLDetailsElement, opening: boolean) => {
+      const answer = item.querySelector<HTMLElement>('.faq-answer');
+      const content = answer?.querySelector<HTMLElement>('p');
+      if (!answer || !content) return;
+
+      answer.getAnimations().forEach((animation) => animation.cancel());
+      content.getAnimations().forEach((animation) => animation.cancel());
+
+      if (opening) item.open = true;
+
+      if (reduceMotion) {
+        item.open = opening;
+        return;
+      }
+
+      item.dataset.faqAnimating = 'true';
+      const startHeight = opening ? 0 : answer.offsetHeight;
+      const endHeight = opening ? answer.scrollHeight : 0;
+      const duration = opening ? 500 : 300;
+      const easing = opening ? 'cubic-bezier(.16,1,.3,1)' : 'cubic-bezier(.4,0,.2,1)';
+
+      const panelAnimation = answer.animate([
+        { height: `${startHeight}px`, opacity: opening ? .35 : 1 },
+        { height: `${endHeight}px`, opacity: opening ? 1 : 0 },
+      ], { duration, easing, fill: 'both' });
+
+      const contentAnimation = content.animate([
+        { opacity: opening ? 0 : 1, transform: opening ? 'translate3d(0, -8px, 0)' : 'translate3d(0, 0, 0)' },
+        { opacity: opening ? 1 : 0, transform: opening ? 'translate3d(0, 0, 0)' : 'translate3d(0, -5px, 0)' },
+      ], {
+        duration: opening ? 420 : 220,
+        delay: opening ? 55 : 0,
+        easing,
+        fill: 'both',
+      });
+
+      await Promise.allSettled([panelAnimation.finished, contentAnimation.finished]);
+      panelAnimation.cancel();
+      contentAnimation.cancel();
+      if (!opening) item.open = false;
+      delete item.dataset.faqAnimating;
+    };
+
+    faqItems.forEach((item) => {
+      const summary = item.querySelector<HTMLElement>('summary');
+      summary?.addEventListener('click', async (event) => {
+        event.preventDefault();
+        if (faqIsTransitioning) return;
+        faqIsTransitioning = true;
+
+        if (item.open) {
+          await animateFaq(item, false);
+        } else {
+          const transitions = faqItems
+            .filter((other) => other !== item && other.open)
+            .map((other) => animateFaq(other, false));
+          transitions.push(animateFaq(item, true));
+          await Promise.all(transitions);
+        }
+
+        faqIsTransitioning = false;
+      });
+    });
+
+    document.querySelectorAll<HTMLElement>('[data-differentials-slider]').forEach((slider) => {
+      const tabs = [...slider.querySelectorAll<HTMLButtonElement>('[data-difference-tab]')];
+      const slides = [...slider.querySelectorAll<HTMLElement>('[data-difference-slide]')];
+      const stage = slider.querySelector<HTMLElement>('.difference-stage');
+      let activeIndex = Math.max(0, tabs.findIndex((tab) => tab.getAttribute('aria-selected') === 'true'));
+      let transitionVersion = 0;
+
+      const activateSlide = async (index: number, focus = false) => {
+        if (!tabs[index] || !slides[index]) return;
+
+        tabs.forEach((tab, tabIndex) => {
+          const active = tabIndex === index;
+          tab.classList.toggle('is-active', active);
+          tab.setAttribute('aria-selected', String(active));
+          tab.tabIndex = active ? 0 : -1;
+          if (active) {
+            if (focus) tab.focus();
+          }
+        });
+
+        if (index === activeIndex) return;
+
+        const previousIndex = activeIndex;
+        const outgoing = slides[previousIndex];
+        const incoming = slides[index];
+        const direction = index > previousIndex ? 1 : -1;
+        const version = ++transitionVersion;
+        activeIndex = index;
+
+        if (reduceMotion) {
+          slides.forEach((slide, slideIndex) => {
+            slide.classList.toggle('is-active', slideIndex === index);
+            slide.hidden = slideIndex !== index;
+          });
+          if (stage) {
+            stage.style.removeProperty('height');
+            stage.style.removeProperty('overflow');
+            stage.style.removeProperty('will-change');
+          }
+          return;
+        }
+
+        const { gsap } = await loadAnimationTools();
+        if (version !== transitionVersion) return;
+        let currentStageHeight = 0;
+
+        if (stage) {
+          gsap.killTweensOf(stage);
+          currentStageHeight = stage.getBoundingClientRect().height;
+        }
+
+        slides.forEach((slide, slideIndex) => {
+          slide.getAnimations().forEach((animation) => animation.cancel());
+          const motionItems = [...slide.querySelectorAll<HTMLElement>('[data-motion-item]')];
+          motionItems.forEach((item) => {
+            item.getAnimations().forEach((animation) => animation.cancel());
+          });
+          gsap.killTweensOf([slide, ...motionItems]);
+          gsap.set([slide, ...motionItems], {
+            clearProps: 'opacity,visibility,transform,filter,boxShadow,transformOrigin',
+          });
+          slide.classList.toggle('is-active', slideIndex === index);
+          slide.style.removeProperty('z-index');
+          slide.style.removeProperty('pointer-events');
+          if (slideIndex !== previousIndex && slideIndex !== index) slide.hidden = true;
+        });
+
+        incoming.hidden = false;
+
+        let targetStageHeight = currentStageHeight;
+        if (stage) {
+          // Measure the next card at its natural height before animating the container.
+          outgoing.hidden = true;
+          stage.style.removeProperty('height');
+          targetStageHeight = stage.getBoundingClientRect().height;
+          outgoing.hidden = false;
+          stage.style.height = `${currentStageHeight}px`;
+          stage.style.overflow = 'hidden';
+          stage.style.willChange = 'height';
+        }
+
+        if (stage) {
+          gsap.to(stage, {
+            height: targetStageHeight,
+            duration: 0.5,
+            ease: 'power2.inOut',
+            overwrite: true,
+            onComplete: () => {
+              if (version !== transitionVersion) return;
+              stage.style.removeProperty('height');
+              stage.style.removeProperty('overflow');
+              stage.style.removeProperty('will-change');
+            },
+          });
+        }
+
+        outgoing.style.zIndex = '1';
+        outgoing.style.pointerEvents = 'none';
+        incoming.style.zIndex = '2';
+
+        const featureMark = incoming.querySelector<HTMLElement>('.feature-mark');
+        const cardTitle = incoming.querySelector<HTMLElement>('h3');
+        const cardDescription = incoming.querySelector<HTMLElement>('p');
+        const cardCta = incoming.querySelector<HTMLElement>('.card-cta');
+        const cardTimeline = gsap.timeline({
+          onComplete: () => {
+            if (version !== transitionVersion) return;
+            outgoing.hidden = true;
+            outgoing.style.removeProperty('z-index');
+            outgoing.style.removeProperty('pointer-events');
+            incoming.style.removeProperty('z-index');
+            gsap.set([outgoing, incoming, featureMark, cardTitle, cardDescription, cardCta].filter(Boolean), {
+              clearProps: 'opacity,visibility,transform,filter,boxShadow,transformOrigin',
+            });
+          },
+        });
+
+        cardTimeline
+          .set(incoming, {
+            autoAlpha: 0,
+            x: direction * 22,
+            y: 8,
+            scale: 0.985,
+            filter: 'blur(5px)',
+            boxShadow: '0 10px 26px rgba(49, 92, 255, 0.1)',
+            transformOrigin: '50% 50%',
+          }, 0)
+          .to(outgoing, {
+            autoAlpha: 0,
+            x: -direction * 10,
+            y: -3,
+            scale: 0.992,
+            filter: 'blur(2px)',
+            boxShadow: '0 10px 28px rgba(49, 92, 255, 0.12)',
+            duration: 0.26,
+            ease: 'power2.in',
+          }, 0)
+          .to(incoming, {
+            autoAlpha: 1,
+            x: 0,
+            y: 0,
+            scale: 1,
+            filter: 'blur(0px)',
+            boxShadow: '0 20px 45px rgba(49, 92, 255, 0.2)',
+            duration: 0.6,
+            ease: 'expo.out',
+          }, 0.08)
+          .call(() => {
+            if (version === transitionVersion) outgoing.hidden = true;
+          }, [], 0.28);
+
+        if (featureMark) {
+          cardTimeline.fromTo(featureMark,
+            { autoAlpha: 0, y: 9, scale: 0.9 },
+            { autoAlpha: 1, y: 0, scale: 1, duration: 0.4, ease: 'back.out(1.35)' },
+            0.18,
+          );
+        }
+
+        if (cardTitle) {
+          cardTimeline.fromTo(cardTitle,
+            { autoAlpha: 0, y: 16, filter: 'blur(5px)' },
+            {
+              autoAlpha: 1,
+              y: 0,
+              filter: 'blur(0px)',
+              duration: 0.5,
+              ease: 'power3.out',
+            },
+            0.22,
+          );
+        }
+
+        if (cardDescription) {
+          cardTimeline.fromTo(cardDescription,
+            { autoAlpha: 0, y: 10, filter: 'blur(4px)' },
+            {
+              autoAlpha: 1,
+              y: 0,
+              filter: 'blur(0px)',
+              duration: 0.44,
+              ease: 'power2.out',
+            },
+            0.31,
+          );
+        }
+
+        if (cardCta) {
+          cardTimeline.fromTo(cardCta,
+            { autoAlpha: 0, y: 8 },
+            { autoAlpha: 1, y: 0, duration: 0.4, ease: 'power2.out' },
+            0.4,
+          );
+        }
+      };
+
+      tabs.forEach((tab, index) => {
+        tab.addEventListener('click', () => activateSlide(index));
+        tab.addEventListener('keydown', (event) => {
+          if (!['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+          event.preventDefault();
+          const lastIndex = tabs.length - 1;
+          let nextIndex = index;
+          if (event.key === 'Home') nextIndex = 0;
+          else if (event.key === 'End') nextIndex = lastIndex;
+          else if (event.key === 'ArrowDown' || event.key === 'ArrowRight') nextIndex = index === lastIndex ? 0 : index + 1;
+          else nextIndex = index === 0 ? lastIndex : index - 1;
+          activateSlide(nextIndex, true);
+        });
+      });
+    });
+
+    const scrollTextBlocks = [...document.querySelectorAll<HTMLElement>('[data-scroll-text]')].map((block) => ({
+      block,
+      words: [...block.querySelectorAll<HTMLElement>('.reveal-word')],
+    }));
+
+    if (scrollTextBlocks.length && !reduceMotion) {
+      document.documentElement.classList.add('has-scroll-reveal');
+      let scrollTextFrame = 0;
+
+      const updateScrollText = () => {
+        scrollTextFrame = 0;
+        const measurements = scrollTextBlocks.map(({ block, words }) => ({
+          words,
+          blockTop: block.getBoundingClientRect().top,
+        }));
+
+        measurements.forEach(({ words, blockTop }) => {
+          const revealStart = window.innerHeight * 0.84;
+          const revealEnd = window.innerHeight * 0.3;
+          const progress = Math.min(1, Math.max(0, (revealStart - blockTop) / (revealStart - revealEnd)));
+          const wordProgress = progress * (words.length + 3);
+
+          words.forEach((word, index) => {
+            const reveal = Math.min(1, Math.max(0, wordProgress - index));
+            word.style.opacity = String(0.16 + reveal * 0.84);
+          });
+        });
+      };
+
+      const requestScrollTextUpdate = () => {
+        if (scrollTextFrame) return;
+        scrollTextFrame = window.requestAnimationFrame(updateScrollText);
+      };
+
+      window.addEventListener('scroll', requestScrollTextUpdate, { passive: true });
+      window.addEventListener('resize', requestScrollTextUpdate, { passive: true });
+      window.requestAnimationFrame(updateScrollText);
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px' });
+
+    document.querySelectorAll('[data-reveal]').forEach((element) => observer.observe(element));
+  </script>
+</BaseLayout>
+
+<noscript>
+  <style>
+    .spotlight-text { opacity: 1 !important; }
+  </style>
+</noscript>

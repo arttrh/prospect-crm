@@ -1,0 +1,54 @@
+---
+import { Icon } from 'astro-icon/components';
+import WhatsAppIcon from '@/components/WhatsAppIcon.astro';
+import BrandMark from '@/components/BrandMark.astro';
+import { siteConfig } from '@/config/site';
+
+const { contact, footer, identity } = siteConfig;
+const { whatsapp } = footer;
+---
+
+<footer class="footer">
+  <div class="container footer-cta" data-reveal>
+    <div>
+      <p class="section-kicker spotlight-text">{footer.eyebrow}</p>
+      <h2 class="spotlight-text">{footer.title}<br /><span>{footer.highlightedTitle}</span></h2>
+    </div>
+    <a class="button button-primary button-large" href={contact.whatsappUrl} target="_blank" rel="noreferrer"><WhatsAppIcon /> {contact.primaryCtaLabel}</a>
+  </div>
+  <div class="container footer-main">
+    <div class="footer-brand">
+      <BrandMark />
+    </div>
+    <p class="spotlight-text">{footer.description}</p>
+    <div class="footer-links">
+      {footer.links.map((link) => <a href={link.href}>{link.label}</a>)}
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <span>© {new Date().getFullYear()} {identity.siteName}. {footer.copyrightSuffix}</span>
+    <span>{identity.registration}</span>
+    <a href={footer.backToTopHref}>{footer.backToTopLabel} <Icon name="lucide:arrow-up" aria-hidden="true" /></a>
+  </div>
+</footer>
+
+<aside class="whatsapp-contact" data-whatsapp-contact aria-label={whatsapp.regionLabel}>
+  <div class="whatsapp-invite" id="whatsapp-menu" data-whatsapp-invite>
+    <button class="whatsapp-invite-close" type="button" aria-label={whatsapp.closeLabel} data-whatsapp-close>
+      <Icon name="lucide:x" aria-hidden="true" />
+    </button>
+    <img src={whatsapp.image.src} width={whatsapp.image.width} height={whatsapp.image.height} alt={whatsapp.image.alt} loading="lazy" decoding="async" />
+    <div>
+      <strong>{whatsapp.senderName}</strong>
+      <p>{whatsapp.message}</p>
+    </div>
+    <a class="whatsapp-invite-action" href={contact.whatsappUrl} target="_blank" rel="noreferrer">
+      <WhatsAppIcon />
+      {whatsapp.actionLabel}
+    </a>
+  </div>
+
+  <button class="floating-whatsapp" type="button" aria-label={whatsapp.buttonLabel} aria-expanded="false" aria-controls="whatsapp-menu">
+    <WhatsAppIcon />
+  </button>
+</aside>

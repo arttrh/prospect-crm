@@ -47,3 +47,13 @@ sqlnet.ora
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Original Astro motor: local dependencies and build outputs
+vendor/**/node_modules/
+vendor/**/.astro/
+vendor/**/dist/
+.template-build/
+.generated/
+public/_diego/_astro/
+test-results/
+playwright-report/

@@ -20,6 +20,6 @@ test("mostra o formulário de importação do Apify", async ({ page }) => {
 test("mantém os controles utilizáveis em tela móvel", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "mobile", "Somente no projeto móvel");
   await page.goto("/");
-  await expect(page.getByRole("button", { name: /Kanban/i })).toBeVisible();
+  await expect(page.getByRole("tab", { name: /Kanban/i })).toBeVisible();
   await expect(page.getByPlaceholder("Buscar empresa...")).toBeVisible();
 });

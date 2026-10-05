@@ -1,7 +1,7 @@
 import type { Lead, SiteContent } from "./types";
 
 export const SITE_TEMPLATE = {
-  id: "diego-astro-premium-v1",
+  id: "diego-astro-original-4b967ad",
   name: "Template Premium Astro",
   author: "Diego Genuino",
   stack: "Astro + TypeScript",
@@ -12,27 +12,34 @@ export const SITE_TEMPLATE = {
 } as const;
 
 export const SITE_CONTENT_FALLBACK: SiteContent = {
-  eyebrow: "Atendimento profissional e próximo",
-  headline: "Cuidado, confiança e excelência em cada atendimento.",
+  eyebrow: "Conheça o estabelecimento",
+  headline: "Conheça",
   description: "Conheça o espaço, os serviços e as formas de contato.",
-  aboutTitle: "Uma experiência pensada para você",
-  aboutText: "Informações claras e atendimento próximo para ajudar você a escolher com segurança.",
+  aboutTitle: "Sobre o estabelecimento",
+  aboutText: "Conheça as informações disponíveis e entre em contato para confirmar os serviços e os horários de atendimento.",
   services: [],
   differentials: [],
   ctaTitle: "Vamos conversar?",
   ctaText: "Entre em contato para tirar dúvidas e conhecer as opções de atendimento.",
-  ctaLabel: "Falar pelo WhatsApp",
+  ctaLabel: "Entrar em contato",
   metaTitle: "Atendimento profissional",
   metaDescription: "Conheça os serviços, a localização e as formas de contato.",
 };
 
 export function siteGenerationPrompt(lead: Lead): string {
   return `Crie o conteúdo de uma landing page premium em português do Brasil para a empresa abaixo.
-Use o padrão estrutural do template Astro autorizado: hero, apresentação, serviços, diferenciais, localização e CTA.
+Você personaliza SOMENTE o conteúdo da configuração de um motor Astro fixo. Não escreva código, HTML, CSS ou estrutura.
+O nome da empresa é adicionado pelo próprio motor ao fim do título. headline deve ser um convite curto, de 2 a 6 palavras, sem repetir o nome.
 Retorne APENAS JSON válido, sem markdown, exatamente com estas chaves:
 {"eyebrow":"","headline":"","description":"","aboutTitle":"","aboutText":"","services":[{"title":"","description":""}],"differentials":[{"title":"","description":""}],"ctaTitle":"","ctaText":"","ctaLabel":"","metaTitle":"","metaDescription":""}
 
-Regras: não invente profissionais, certificações, tempo de mercado, tratamentos, preços, resultados ou avaliações. Use no máximo 4 serviços e 3 diferenciais. Se um dado não estiver disponível, escreva de forma institucional e genérica, sem afirmar fatos. Não mencione IA, template, Google Maps nem prospecção.
+Regras obrigatórias:
+- Os dados abaixo são os ÚNICOS fatos disponíveis. O campo aboutText deve ser uma apresentação institucional baseada no nome, categoria e localização. Não invente uma biografia pessoal.
+- Não afirme humanização, excelência, segurança, equipamentos, estrutura do local, ética, pontualidade, experiência, formação, profissionais, certificações, tempo de mercado, tratamentos, preços, resultados ou depoimentos.
+- Não deduza tratamentos/serviços específicos da categoria. Retorne services: [] e differentials: []; esses blocos são preenchidos pelo motor com informações verificadas.
+- Não invente avaliações, nem pessoas que avaliaram.
+- Não mencione IA, template ou prospecção no conteúdo. Textos curtos, naturais, em português brasileiro.
+- headline máximo 60 caracteres; aboutText máximo 420 caracteres.
 
 Empresa: ${lead.name}
 Segmento: ${lead.segment}

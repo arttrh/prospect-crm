@@ -1,0 +1,107 @@
+{
+  "repository": "https://github.com/DiegoGenuino/Sheila-Schefer-Advocacia",
+  "sourceTree": "4b967ad1838cb3aa6b06419b1f600c68d8387126",
+  "permission": "User reports authorization from Diego Genuino.",
+  "protectedFiles": [
+    {
+      "path": "src/components/About.astro",
+      "sha": "30e34ffa9e9c43b53b169bf835db24a9e58ce8be"
+    },
+    {
+      "path": "src/components/ArrowUpRightIcon.astro",
+      "sha": "496f4c24c9e4e1932bd77a85882299f098ef7102"
+    },
+    {
+      "path": "src/components/BrandMark.astro",
+      "sha": "97ab11656dee0c9cc4a621983bcb198e3ae2e521"
+    },
+    {
+      "path": "src/components/Differentials.astro",
+      "sha": "ed7822311020545514891680c7f9df34f06ed72c"
+    },
+    {
+      "path": "src/components/FAQ.astro",
+      "sha": "aeefa2c7494e9633b02dde1431470463af8a0320"
+    },
+    {
+      "path": "src/components/Footer.astro",
+      "sha": "9fa7bba46bf9354d2000e360da1c32998b171047"
+    },
+    {
+      "path": "src/components/Header.astro",
+      "sha": "cc8e5154f9d398888fc149f300bf5301afd64c21"
+    },
+    {
+      "path": "src/components/Hero.astro",
+      "sha": "c59845ad558b11a53ba213a93309f0403b1bd7de"
+    },
+    {
+      "path": "src/components/LocationSection.astro",
+      "sha": "eecf3a50a7f6aaea607fad6993a57e24ac33db32"
+    },
+    {
+      "path": "src/components/PracticeGrid.astro",
+      "sha": "5f6224f7afc6b7cd5d78846896a3e132961c57f4"
+    },
+    {
+      "path": "src/components/ProcessJourney.astro",
+      "sha": "96e73e961ef601e8c3a18531671a9582b44c37a9"
+    },
+    {
+      "path": "src/components/Reviews.astro",
+      "sha": "9fc827de63f81db45a5975170fb34d88dec48ed8"
+    },
+    {
+      "path": "src/components/SEO.astro",
+      "sha": "5267156870be079a8b9a8412ac3910347aac5204"
+    },
+    {
+      "path": "src/components/Stats.astro",
+      "sha": "5b06af43b91bfd0c54b5aeb8968c8ced93115345"
+    },
+    {
+      "path": "src/components/UrgencySection.astro",
+      "sha": "d0c224309b52440d0e5fb9783e42ccab4ccea843"
+    },
+    {
+      "path": "src/components/VideoSection.astro",
+      "sha": "1d8b304684fec7836297c7e06f8aa2a8e1782e68"
+    },
+    {
+      "path": "src/components/WhatsAppIcon.astro",
+      "sha": "a0b175214085a8b09c9b4e9264d11fa013040dc6"
+    },
+    {
+      "path": "src/layouts/BaseLayout.astro",
+      "sha": "be69238e81783cc6a5d36efde196d95105629cf8"
+    },
+    {
+      "path": "src/pages/index.astro",
+      "sha": "d7e6e71f777f6e2707edc54edaff52a748407645"
+    },
+    {
+      "path": "src/pages/index.md.ts",
+      "sha": "f1450c619e1c0dfba36b7cd4b590b2bf6ad28621"
+    },
+    {
+      "path": "src/pages/llms.txt.ts",
+      "sha": "a05afef652391cba7ec7c446683f4ec9e3014fc3"
+    },
+    {
+      "path": "src/pages/robots.txt.ts",
+      "sha": "d19de0ab0629923eb7834d326586c326be1ff180"
+    },
+    {
+      "path": "src/pages/site.webmanifest.ts",
+      "sha": "9d8e20140cabb24de813a69e9eb726ab3973438c"
+    },
+    {
+      "path": "src/pages/sitemap.xml.ts",
+      "sha": "66d211d00236222926aa110799c026100393c901"
+    },
+    {
+      "path": "src/styles/global.css",
+      "sha": "7b9cfdced4bea078b05c42e701a6ce95f51d1c75"
+    }
+  ]
+}

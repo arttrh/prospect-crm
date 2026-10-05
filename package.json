@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/build-diego.mjs && next build",
+    "build:template": "node scripts/build-diego.mjs",
+    "test:template": "node --import ./vendor/diego-astro/node_modules/tsx/dist/loader.mjs --test tests/template-engine.test.ts",
     "start": "next start",
     "lint": "eslint",
     "test": "playwright test"
