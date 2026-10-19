@@ -7,8 +7,8 @@ import * as Select from "@radix-ui/react-select";
 import * as Tabs from "@radix-ui/react-tabs";
 import { Button, Callout, Card, Flex, Heading, Text, TextArea, TextField, Theme } from "@radix-ui/themes";
 import {
-  ArrowRight, Bot, Building2, CalendarClock, Camera, Check, ChevronDown, Code2, ExternalLink, GripVertical,
-  LayoutDashboard, List, LoaderCircle, LogOut, Mail, MapPin, MessageCircle, Plus,
+  AlertTriangle, ArrowRight, BarChart3, Bot, Building2, CalendarClock, CalendarDays, Camera, Check, CheckCircle2, ChevronDown, Code2, ExternalLink, GripVertical,
+  LayoutDashboard, List, LoaderCircle, LogOut, Mail, MapPin, MessageCircle, PlugZap, Plus,
   RefreshCw, Search, ShieldCheck, Sparkles, Star, X,
 } from "lucide-react";
 import { availableChannels, defaultMessage, emailUrl, instagramUrl, whatsappUrl } from "@/lib/contact";
@@ -230,7 +230,7 @@ export function CrmApp() {
   const [database, setDatabase] = useState("");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selected, setSelected] = useState<Lead | null>(null);
-  const [tab, setTab] = useState("kanban");
+  const [tab, setTab] = useState("overview");
   const [query, setQuery] = useState(""); const [status, setStatus] = useState("ALL"); const [segment, setSegment] = useState("ALL"); const [channel, setChannel] = useState("ALL");
   const [loading, setLoading] = useState(false); const [error, setError] = useState("");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 7 } }));
@@ -271,6 +271,7 @@ export function CrmApp() {
     followups: leads.filter((lead) => lead.status === "FOLLOW_UP" || (lead.nextFollowUpAt && new Date(lead.nextFollowUpAt) <= new Date())).length,
     reunioes: leads.filter((lead) => lead.status === "MEETING").length,
   };
+  const isPipelineView = !["reports", "followups", "pierre"].includes(tab);
 
   async function moveLead(event: DragEndEvent) {
     const target = event.over?.id as LeadStatus | undefined;
@@ -295,7 +296,9 @@ export function CrmApp() {
         <div className="header-actions"><span className={`database-badge db-${database}`}>{database === "oracle" ? "Oracle Cloud" : database === "supabase-transition" ? "Supabase · transição" : "Demonstração"}</span><Button variant="ghost" onClick={loadLeads}><RefreshCw size={16} /> Atualizar</Button><Button variant="ghost" color="gray" onClick={async () => { await api("/api/auth/logout", { method: "POST" }); setAuth("no"); }}><LogOut size={16} /> Sair</Button></div>
       </header>
       <main className="content">
-        <section className="hero-row"><div><Text color="gray">Bom trabalho, Arthur</Text><Heading size="7">Pipeline de prospecção</Heading><Text color="gray">Só entram empresas com ao menos um canal de contato utilizável.</Text></div><Button size="3" onClick={() => setTab("import")}><Plus size={18} /> Importar do Apify</Button></section>
+        <nav className="main-nav" aria-label="Navegação principal"><button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}><LayoutDashboard size={17} /> Visão geral</button><button className={tab === "reports" ? "active" : ""} onClick={() => setTab("reports")}><BarChart3 size={17} /> Relatórios</button><button className={tab === "followups" ? "active" : ""} onClick={() => setTab("followups")}><CalendarDays size={17} /> Follow-ups</button><button className={tab === "pierre" ? "active" : ""} onClick={() => setTab("pierre")}><PlugZap size={17} /> Pierre</button></nav>
+        {!isPipelineView && <>{tab === "reports" && <Reports leads={leads} />}{tab === "followups" && <FollowUps leads={leads} onOpen={setSelected} />}{tab === "pierre" && <PierrePanel />}</>}
+        {isPipelineView && <><section className="hero-row"><div><Text color="gray">Bom trabalho, Arthur</Text><Heading size="7">Pipeline de prospecção</Heading><Text color="gray">Só entram empresas com ao menos um canal de contato utilizável.</Text></div><Button size="3" onClick={() => setTab("import")}><Plus size={18} /> Importar do Apify</Button></section>
         {error && <Callout.Root color="red"><Callout.Icon><X size={16} /></Callout.Icon><Callout.Text>{error}</Callout.Text></Callout.Root>}
         <section className="stats-grid">
           <Card><Text color="gray">Leads válidos</Text><Heading size="8">{stats.total}</Heading><span className="stat-note">com canal disponível</span></Card>
@@ -318,7 +321,7 @@ export function CrmApp() {
           </Tabs.Content>
           <Tabs.Content value="list"><LeadTable leads={filtered} onOpen={setSelected} /></Tabs.Content>
           <Tabs.Content value="import"><ImportPanel onImported={loadLeads} /></Tabs.Content>
-        </Tabs.Root>
+        </Tabs.Root></>}
       </main>
       <LeadDialog key={selected?.id || "none"} lead={selected} onClose={() => setSelected(null)} onSaved={(saved) => { setLeads((current) => current.map((lead) => lead.id === saved.id ? saved : lead)); setSelected(saved); }} />
     </div>
@@ -328,6 +331,27 @@ export function CrmApp() {
 function LeadTable({ leads, onOpen }: { leads: Lead[]; onOpen: (lead: Lead) => void }) {
   return <div className="table-wrap"><table><thead><tr><th>Empresa</th><th>Segmento</th><th>Contato</th><th>Status</th><th>Follow-up</th><th /></tr></thead><tbody>{leads.map((lead) => <tr key={lead.id}><td><strong>{lead.name}</strong><span>{lead.category || lead.neighborhood || "—"}</span></td><td>{lead.segment}</td><td><div className="table-channels">{availableChannels(lead).map((item) => <span key={item}>{CHANNEL_LABELS[item]}</span>)}</div></td><td><StatusPill status={lead.status} /></td><td>{lead.nextFollowUpAt ? new Date(lead.nextFollowUpAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—"}</td><td><Button variant="ghost" onClick={() => onOpen(lead)}>Abrir <ArrowRight size={15} /></Button></td></tr>)}</tbody></table>{!leads.length && <div className="empty-table">Nenhum lead encontrado.</div>}</div>;
 }
+
+function Reports({ leads }: { leads: Lead[] }) {
+  const hasHistory = leads.some((lead) => lead.lastContactAt);
+  const stageCounts = KANBAN_STATUSES.map((stage) => ({ stage, label: STATUS_LABELS[stage], count: leads.filter((lead) => lead.status === stage).length }));
+  const max = Math.max(1, ...stageCounts.map((item) => item.count));
+  return <section className="insights-page" aria-labelledby="reports-title">
+    <div className="page-heading"><div><span className="eyebrow">Visão operacional</span><Heading id="reports-title" size="7">Relatórios</Heading><Text color="gray">Acompanhe o funil sem perder o contexto dos contatos.</Text></div><span className="demo-badge">{hasHistory ? "Histórico disponível" : "Dados demonstrativos"}</span></div>
+    <div className="kpi-grid"><article className="insight-card"><span>Conversão do funil</span><strong>{leads.length ? `${Math.round((leads.filter((lead) => lead.status === "WON").length / leads.length) * 100)}%` : "0%"}</strong><small>leads ganhos</small></article><article className="insight-card"><span>Em acompanhamento</span><strong>{leads.filter((lead) => lead.status === "FOLLOW_UP").length}</strong><small>follow-ups ativos</small></article><article className="insight-card"><span>Canais ativos</span><strong>{new Set(leads.flatMap((lead) => availableChannels(lead))).size}</strong><small>WhatsApp, e-mail e Instagram</small></article></div>
+    <div className="report-grid"><article className="report-card"><div className="card-heading"><div><span className="eyebrow">Distribuição</span><h2>Leads por estágio</h2></div><BarChart3 size={20} /></div><div className="bar-chart" role="img" aria-label="Gráfico de barras com leads por estágio">{stageCounts.map((item) => <div className="bar-item" key={item.stage}><span>{item.label}</span><div><i style={{ height: `${Math.max(8, (item.count / max) * 100)}%` }} /></div><b>{item.count}</b></div>)}</div></article><article className="report-card"><div className="card-heading"><div><span className="eyebrow">Resumo</span><h2>Composição do pipeline</h2></div><span className="donut" aria-hidden="true" /></div><ul className="legend-list">{stageCounts.slice(0, 4).map((item, index) => <li key={item.stage}><span className={`legend-dot dot-${index}`} />{item.label}<b>{item.count}</b></li>)}</ul></article></div>
+    <div className="table-wrap report-table"><table><thead><tr><th>Estágio</th><th>Leads</th><th>Participação</th></tr></thead><tbody>{stageCounts.map((item) => <tr key={item.stage}><td><strong>{item.label}</strong></td><td>{item.count}</td><td>{leads.length ? `${Math.round(item.count / leads.length * 100)}%` : "0%"}</td></tr>)}</tbody></table></div>
+  </section>;
+}
+
+function FollowUps({ leads, onOpen }: { leads: Lead[]; onOpen: (lead: Lead) => void }) {
+  const [now] = useState(() => Date.now()); const followups = leads.filter((lead) => lead.nextFollowUpAt || lead.status === "FOLLOW_UP").sort((a, b) => (a.nextFollowUpAt || "").localeCompare(b.nextFollowUpAt || ""));
+  return <section className="insights-page" aria-labelledby="followups-title"><div className="page-heading"><div><span className="eyebrow">Ações manuais</span><Heading id="followups-title" size="7">Follow-ups</Heading><Text color="gray">Revise cada próximo contato antes de agir.</Text></div><span className="demo-badge"><CalendarDays size={15} /> {followups.length} pendentes</span></div><div className="followup-columns"><article className="followup-lane"><div className="lane-heading"><AlertTriangle size={17} /><h2>Atrasados</h2></div>{followups.filter((lead) => lead.nextFollowUpAt && new Date(lead.nextFollowUpAt).getTime() < now).map((lead) => <FollowUpItem key={lead.id} lead={lead} onOpen={onOpen} overdue />)}{!followups.some((lead) => lead.nextFollowUpAt && new Date(lead.nextFollowUpAt).getTime() < now) && <p className="empty-state">Nenhum contato atrasado.</p>}</article><article className="followup-lane"><div className="lane-heading"><CalendarClock size={17} /><h2>Hoje e próximos</h2></div>{followups.filter((lead) => !lead.nextFollowUpAt || new Date(lead.nextFollowUpAt).getTime() >= now).map((lead) => <FollowUpItem key={lead.id} lead={lead} onOpen={onOpen} />)}{!followups.length && <p className="empty-state">Nenhum follow-up agendado.</p>}</article></div></section>;
+}
+
+function FollowUpItem({ lead, onOpen, overdue }: { lead: Lead; onOpen: (lead: Lead) => void; overdue?: boolean }) { return <button className="followup-item" onClick={() => onOpen(lead)}><span className="followup-item-main"><strong>{lead.name}</strong><small>{lead.nextFollowUpAt ? new Date(lead.nextFollowUpAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "Hoje · definir horário"}</small></span><span className={`priority ${overdue ? "priority-high" : ""}`}>{overdue ? "Prioridade alta" : "Prioridade normal"}</span><span className="followup-channel">{lead.preferredChannel ? CHANNEL_LABELS[lead.preferredChannel] : "Canal a definir"}</span><ArrowRight size={16} /></button>; }
+
+function PierrePanel() { const states = [{ label: "Desconectado", icon: PlugZap }, { label: "Conectando", icon: LoaderCircle }, { label: "Conectado", icon: CheckCircle2 }, { label: "Erro", icon: AlertTriangle }, { label: "Sincronizando", icon: RefreshCw }]; return <section className="insights-page" aria-labelledby="pierre-title"><div className="page-heading"><div><span className="eyebrow">Camada visual</span><Heading id="pierre-title" size="7">Integração Pierre</Heading><Text color="gray">Status informativo. Nenhuma conexão ou contrato é iniciado nesta tela.</Text></div><Button variant="soft" disabled>Abrir app Pierre <ExternalLink size={15} /></Button></div><div className="pierre-card"><div className="pierre-orb"><PlugZap size={28} /></div><div><h2>Conexão não configurada</h2><p>A integração ficará disponível quando o contrato técnico e a URL oficial forem aprovados.</p></div></div><div className="pierre-states">{states.map(({ label, icon: Icon }) => <div className="pierre-state" key={label}><Icon size={18} /><span>{label}</span></div>)}</div></section>; }
 
 function ImportPanel({ onImported }: { onImported: () => Promise<void> }) {
   const [datasetId, setDatasetId] = useState(""); const [segment, setSegment] = useState("Saúde"); const [maxReviews, setMaxReviews] = useState("25"); const [loading, setLoading] = useState(false); const [result, setResult] = useState<ImportResult | null>(null); const [error, setError] = useState("");

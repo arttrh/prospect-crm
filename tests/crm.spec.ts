@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 test("abre o CRM, o Kanban e os detalhes do lead", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Pipeline de prospecção" })).toBeVisible();
+  await page.getByRole("tab", { name: /Kanban/i }).click();
   await expect(page.getByText("Clínica Horizonte", { exact: true })).toBeVisible();
   await page.getByText("Clínica Horizonte", { exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
@@ -12,7 +13,7 @@ test("abre o CRM, o Kanban e os detalhes do lead", async ({ page }) => {
 
 test("mostra o formulário de importação do Apify", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Importar do Apify/i }).click();
+  await page.getByRole("tab", { name: /Importar/i }).click();
   await expect(page.getByRole("heading", { name: "Importar dataset do Apify" })).toBeVisible();
   await expect(page.getByText(/Nenhum Actor é executado/i)).toBeVisible();
 });
