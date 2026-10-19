@@ -12,10 +12,13 @@ import {
   RefreshCw, Search, ShieldCheck, Sparkles, Star, X,
 } from "lucide-react";
 import { availableChannels, defaultMessage, emailUrl, instagramUrl, whatsappUrl } from "@/lib/contact";
+import { DEMO_LEADS } from "@/lib/demo-data";
 import { LEAD_STATUSES, STATUS_LABELS, type ContactChannel, type ImportResult, type Lead, type LeadStatus, type SiteDraft } from "@/lib/types";
 
 const KANBAN_STATUSES: LeadStatus[] = ["NEW", "SENT", "FOLLOW_UP", "REPLIED", "SITE_SENT", "MEETING", "WON", "DISQUALIFIED"];
 const CHANNEL_LABELS: Record<ContactChannel, string> = { WHATSAPP: "WhatsApp", EMAIL: "E-mail", INSTAGRAM: "Instagram" };
+// shortcut: demonstração visual temporária; reativar login antes de operar dados reais.
+const UI_PREVIEW_MODE = true;
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(path, { ...options, headers: { "content-type": "application/json", ...(options?.headers || {}) } });
@@ -25,8 +28,22 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 async function initialData() {
-  const session = await api<{ authenticated: boolean; database: string }>("/api/auth/session");
-  const data = await api<{ leads: Lead[] }>("/api/leads");
+  let session: { authenticated: boolean; database: string };
+  try {
+    session = await api<{ authenticated: boolean; database: string }>("/api/auth/session");
+    console.info("[auth] sessão validada", { database: session.database });
+  } catch (error) {
+    console.error("[auth] validação de sessão falhou", error instanceof Error ? { message: error.message } : {});
+    throw error;
+  }
+  let data: { leads: Lead[] };
+  try {
+    data = await api<{ leads: Lead[] }>("/api/leads");
+    console.info("[auth] leads carregados", { total: data.leads.length });
+  } catch (error) {
+    console.error("[auth] carregamento de leads falhou", error instanceof Error ? { message: error.message } : {});
+    throw error;
+  }
   return { session, leads: data.leads };
 }
 
@@ -90,31 +107,6 @@ function KanbanColumn({ status, leads, onOpen }: { status: LeadStatus; leads: Le
         {!leads.length && <div className="empty-column">Arraste um lead para cá</div>}
       </div>
     </section>
-  );
-}
-
-function Login({ onSuccess }: { onSuccess: () => Promise<void> }) {
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  async function submit(event: React.FormEvent) {
-    event.preventDefault(); setLoading(true); setError("");
-    try { await api("/api/auth/login", { method: "POST", body: JSON.stringify({ password }) }); await onSuccess(); }
-    catch (err) { setError(err instanceof Error ? err.message : "Senha incorreta"); }
-    finally { setLoading(false); }
-  }
-  return (
-    <main className="login-shell">
-      <form className="login-card" onSubmit={submit}>
-        <div className="brand-mark"><ShieldCheck size={28} /></div>
-        <Text size="2" color="gray">Área privada</Text>
-        <Heading size="7">Prospect CRM</Heading>
-        <Text color="gray">Seus leads, canais e follow-ups em um só lugar.</Text>
-        <label className="field-label">Senha de acesso<TextField.Root type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Digite sua senha" autoFocus /></label>
-        {error && <Text color="red" size="2">{error}</Text>}
-        <Button type="submit" size="3" disabled={loading}>{loading ? <LoaderCircle className="spin" /> : "Entrar"}</Button>
-      </form>
-    </main>
   );
 }
 
@@ -226,8 +218,8 @@ function LeadDialog({ lead, onClose, onSaved }: { lead: Lead | null; onClose: ()
 }
 
 export function CrmApp() {
-  const [auth, setAuth] = useState<"loading" | "yes" | "no">("loading");
-  const [database, setDatabase] = useState("");
+  const [auth, setAuth] = useState<"loading" | "yes" | "no">(UI_PREVIEW_MODE ? "yes" : "loading");
+  const [database, setDatabase] = useState(UI_PREVIEW_MODE ? "demo" : "");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selected, setSelected] = useState<Lead | null>(null);
   const [view, setView] = useState("overview");
@@ -236,16 +228,8 @@ export function CrmApp() {
   const [loading, setLoading] = useState(false); const [error, setError] = useState("");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 7 } }));
 
-  async function bootstrap() {
-    try {
-      const data = await initialData();
-      setAuth("yes"); setDatabase(data.session.database); setLeads(data.leads);
-    } catch {
-      setAuth("no");
-      throw new Error("Não foi possível carregar o CRM. Tente novamente.");
-    }
-  }
   async function loadLeads() {
+    if (UI_PREVIEW_MODE) { setLeads(DEMO_LEADS); return; }
     setLoading(true); setError("");
     try { const data = await api<{ leads: Lead[] }>("/api/leads"); setLeads(data.leads); }
     catch (err) { setError(err instanceof Error ? err.message : "Erro ao carregar"); }
@@ -253,6 +237,10 @@ export function CrmApp() {
   }
   useEffect(() => {
     let active = true;
+    if (UI_PREVIEW_MODE) {
+      Promise.resolve().then(() => { if (active) setLeads(DEMO_LEADS); });
+      return () => { active = false; };
+    }
     initialData().then((data) => {
       if (!active) return;
       setAuth("yes"); setDatabase(data.session.database); setLeads(data.leads);
@@ -272,8 +260,6 @@ export function CrmApp() {
     followups: leads.filter((lead) => lead.status === "FOLLOW_UP" || (lead.nextFollowUpAt && new Date(lead.nextFollowUpAt) <= new Date())).length,
     reunioes: leads.filter((lead) => lead.status === "MEETING").length,
   };
-  const isPipelineView = !["reports", "followups", "pierre"].includes(tab);
-
   async function moveLead(event: DragEndEvent) {
     const target = event.over?.id as LeadStatus | undefined;
     if (!target || !LEAD_STATUSES.includes(target)) return;
@@ -281,6 +267,7 @@ export function CrmApp() {
     if (!lead || lead.status === target) return;
     const optimistic = { ...lead, status: target };
     setLeads((current) => current.map((item) => item.id === lead.id ? optimistic : item));
+    if (UI_PREVIEW_MODE) return;
     try {
       const data = await api<{ lead: Lead }>("/api/leads", { method: "PATCH", body: JSON.stringify({ id: lead.id, status: target }) });
       setLeads((current) => current.map((item) => item.id === lead.id ? data.lead : item));
@@ -288,13 +275,12 @@ export function CrmApp() {
   }
 
   if (auth === "loading") return <main className="loading-screen"><LoaderCircle className="spin" /><Text>Preparando seu CRM…</Text></main>;
-  if (auth === "no") return <Login onSuccess={bootstrap} />;
 
   return (
     <div className="app-shell">
       <header className="app-header">
         <div className="brand"><div className="brand-mark small"><Building2 size={21} /></div><div><strong>Prospect CRM</strong><span>Prospecção multicanal</span></div></div>
-        <div className="header-actions"><span className={`database-badge db-${database}`}>{database === "oracle" ? "Oracle Cloud" : database === "supabase-transition" ? "Supabase · transição" : "Demonstração"}</span><Button variant="ghost" onClick={loadLeads}><RefreshCw size={16} /> Atualizar</Button><Button variant="ghost" color="gray" onClick={async () => { await api("/api/auth/logout", { method: "POST" }); setAuth("no"); }}><LogOut size={16} /> Sair</Button></div>
+        <div className="header-actions"><span className={`database-badge db-${database}`}>{database === "oracle" ? "Oracle Cloud" : database === "supabase-transition" ? "Supabase · transição" : "Demonstração"}</span><Button variant="ghost" onClick={loadLeads}><RefreshCw size={16} /> Atualizar</Button>{!UI_PREVIEW_MODE && <Button variant="ghost" color="gray" onClick={async () => { await api("/api/auth/logout", { method: "POST" }); setAuth("no"); }}><LogOut size={16} /> Sair</Button>}</div>
       </header>
       <main className="content">
         <nav className="main-nav" aria-label="Navegação principal"><button className={view === "overview" ? "active" : ""} onClick={() => setView("overview")}><LayoutDashboard size={17} /> Visão geral</button><button className={view === "reports" ? "active" : ""} onClick={() => setView("reports")}><BarChart3 size={17} /> Relatórios</button><button className={view === "followups" ? "active" : ""} onClick={() => setView("followups")}><CalendarDays size={17} /> Follow-ups</button><button className={view === "pierre" ? "active" : ""} onClick={() => setView("pierre")}><PlugZap size={17} /> Pierre</button></nav>
