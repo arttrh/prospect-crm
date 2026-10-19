@@ -12,10 +12,13 @@ import {
   RefreshCw, Search, ShieldCheck, Sparkles, Star, X,
 } from "lucide-react";
 import { availableChannels, defaultMessage, emailUrl, instagramUrl, whatsappUrl } from "@/lib/contact";
+import { DEMO_LEADS } from "@/lib/demo-data";
 import { LEAD_STATUSES, STATUS_LABELS, type ContactChannel, type ImportResult, type Lead, type LeadStatus, type SiteDraft } from "@/lib/types";
 
 const KANBAN_STATUSES: LeadStatus[] = ["NEW", "SENT", "FOLLOW_UP", "REPLIED", "SITE_SENT", "MEETING", "WON", "DISQUALIFIED"];
 const CHANNEL_LABELS: Record<ContactChannel, string> = { WHATSAPP: "WhatsApp", EMAIL: "E-mail", INSTAGRAM: "Instagram" };
+// shortcut: demonstração visual temporária; reativar login antes de operar dados reais.
+const UI_PREVIEW_MODE = true;
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(path, { ...options, headers: { "content-type": "application/json", ...(options?.headers || {}) } });
@@ -259,8 +262,8 @@ function LeadDialog({ lead, onClose, onSaved }: { lead: Lead | null; onClose: ()
 }
 
 export function CrmApp() {
-  const [auth, setAuth] = useState<"loading" | "yes" | "no">("loading");
-  const [database, setDatabase] = useState("");
+  const [auth, setAuth] = useState<"loading" | "yes" | "no">(UI_PREVIEW_MODE ? "yes" : "loading");
+  const [database, setDatabase] = useState(UI_PREVIEW_MODE ? "demo" : "");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selected, setSelected] = useState<Lead | null>(null);
   const [tab, setTab] = useState("kanban");
@@ -278,6 +281,7 @@ export function CrmApp() {
     }
   }
   async function loadLeads() {
+    if (UI_PREVIEW_MODE) { setLeads(DEMO_LEADS); return; }
     setLoading(true); setError("");
     try { const data = await api<{ leads: Lead[] }>("/api/leads"); setLeads(data.leads); }
     catch (err) { setError(err instanceof Error ? err.message : "Erro ao carregar"); }
@@ -285,6 +289,10 @@ export function CrmApp() {
   }
   useEffect(() => {
     let active = true;
+    if (UI_PREVIEW_MODE) {
+      Promise.resolve().then(() => { if (active) setLeads(DEMO_LEADS); });
+      return () => { active = false; };
+    }
     initialData().then((data) => {
       if (!active) return;
       setAuth("yes"); setDatabase(data.session.database); setLeads(data.leads);
@@ -313,6 +321,7 @@ export function CrmApp() {
     if (!lead || lead.status === target) return;
     const optimistic = { ...lead, status: target };
     setLeads((current) => current.map((item) => item.id === lead.id ? optimistic : item));
+    if (UI_PREVIEW_MODE) return;
     try {
       const data = await api<{ lead: Lead }>("/api/leads", { method: "PATCH", body: JSON.stringify({ id: lead.id, status: target }) });
       setLeads((current) => current.map((item) => item.id === lead.id ? data.lead : item));
@@ -326,7 +335,7 @@ export function CrmApp() {
     <div className="app-shell">
       <header className="app-header">
         <div className="brand"><div className="brand-mark small"><Building2 size={21} /></div><div><strong>Prospect CRM</strong><span>Prospecção multicanal</span></div></div>
-        <div className="header-actions"><span className={`database-badge db-${database}`}>{database === "oracle" ? "Oracle Cloud" : database === "supabase-transition" ? "Supabase · transição" : "Demonstração"}</span><Button variant="ghost" onClick={loadLeads}><RefreshCw size={16} /> Atualizar</Button><Button variant="ghost" color="gray" onClick={async () => { await api("/api/auth/logout", { method: "POST" }); setAuth("no"); }}><LogOut size={16} /> Sair</Button></div>
+        <div className="header-actions"><span className={`database-badge db-${database}`}>{database === "oracle" ? "Oracle Cloud" : database === "supabase-transition" ? "Supabase · transição" : "Demonstração"}</span><Button variant="ghost" onClick={loadLeads}><RefreshCw size={16} /> Atualizar</Button>{!UI_PREVIEW_MODE && <Button variant="ghost" color="gray" onClick={async () => { await api("/api/auth/logout", { method: "POST" }); setAuth("no"); }}><LogOut size={16} /> Sair</Button>}</div>
       </header>
       <main className="content">
         <nav className="main-nav" aria-label="Navegação principal"><button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}><LayoutDashboard size={17} /> Visão geral</button><button className={tab === "reports" ? "active" : ""} onClick={() => setTab("reports")}><BarChart3 size={17} /> Relatórios</button><button className={tab === "followups" ? "active" : ""} onClick={() => setTab("followups")}><CalendarDays size={17} /> Follow-ups</button><button className={tab === "pierre" ? "active" : ""} onClick={() => setTab("pierre")}><PlugZap size={17} /> Pierre</button></nav>
