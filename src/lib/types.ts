@@ -10,7 +10,8 @@ export const LEAD_STATUSES = [
 ] as const;
 
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
-export type ContactChannel = "WHATSAPP" | "EMAIL" | "INSTAGRAM";
+export const CONTACT_CHANNELS = ["WHATSAPP", "EMAIL", "INSTAGRAM"] as const;
+export type ContactChannel = (typeof CONTACT_CHANNELS)[number];
 
 export const STATUS_LABELS: Record<LeadStatus, string> = {
   NEW: "Novo",

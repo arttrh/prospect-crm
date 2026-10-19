@@ -8,5 +8,5 @@ export function requireAuth(request: NextRequest): NextResponse | null {
 
 export function apiError(error: unknown): NextResponse {
   console.error(error);
-  return NextResponse.json({ error: error instanceof Error ? error.message : "Erro interno" }, { status: 500 });
+  return NextResponse.json({ error: "Erro interno. Tente novamente mais tarde." }, { status: 500 });
 }
