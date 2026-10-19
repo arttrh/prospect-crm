@@ -8,8 +8,14 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
   const unauthorized = requireAuth(request);
   if (unauthorized) return unauthorized;
+  let body: { lead: Lead; followUp?: boolean };
   try {
-    const { lead, followUp = false } = (await request.json()) as { lead: Lead; followUp?: boolean };
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
+  }
+  try {
+    const { lead, followUp = false } = body;
     if (!lead?.name) return NextResponse.json({ error: "Lead inválido" }, { status: 400 });
     if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json({ message: defaultMessage(lead, followUp), provider: "modelo-local" });

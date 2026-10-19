@@ -93,13 +93,13 @@ function KanbanColumn({ status, leads, onOpen }: { status: LeadStatus; leads: Le
   );
 }
 
-function Login({ onSuccess }: { onSuccess: () => void }) {
+function Login({ onSuccess }: { onSuccess: () => Promise<void> }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setLoading(true); setError("");
-    try { await api("/api/auth/login", { method: "POST", body: JSON.stringify({ password }) }); onSuccess(); }
+    try { await api("/api/auth/login", { method: "POST", body: JSON.stringify({ password }) }); await onSuccess(); }
     catch (err) { setError(err instanceof Error ? err.message : "Senha incorreta"); }
     finally { setLoading(false); }
   }
@@ -240,7 +240,10 @@ export function CrmApp() {
     try {
       const data = await initialData();
       setAuth("yes"); setDatabase(data.session.database); setLeads(data.leads);
-    } catch { setAuth("no"); }
+    } catch {
+      setAuth("no");
+      throw new Error("Não foi possível carregar o CRM. Tente novamente.");
+    }
   }
   async function loadLeads() {
     setLoading(true); setError("");
@@ -269,6 +272,7 @@ export function CrmApp() {
     followups: leads.filter((lead) => lead.status === "FOLLOW_UP" || (lead.nextFollowUpAt && new Date(lead.nextFollowUpAt) <= new Date())).length,
     reunioes: leads.filter((lead) => lead.status === "MEETING").length,
   };
+  const isPipelineView = !["reports", "followups", "pierre"].includes(tab);
 
   async function moveLead(event: DragEndEvent) {
     const target = event.over?.id as LeadStatus | undefined;

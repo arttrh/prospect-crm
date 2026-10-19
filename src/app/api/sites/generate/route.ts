@@ -49,8 +49,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const unauthorized = requireAuth(request);
   if (unauthorized) return unauthorized;
+  let body: { leadId?: string };
   try {
-    const { leadId } = (await request.json()) as { leadId?: string };
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
+  }
+  try {
+    const { leadId } = body;
     const lead = (await listLeads()).find((item) => item.id === leadId);
     if (!lead) return NextResponse.json({ error: "Lead não encontrado" }, { status: 404 });
     if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: "Gemini não está configurado no backend" }, { status: 503 });
