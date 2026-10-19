@@ -8,6 +8,10 @@ function secret(): string {
   return process.env.SESSION_SECRET || "";
 }
 
+export function sessionSecretConfigured(): boolean {
+  return Boolean(secret());
+}
+
 function signature(expires: string): string {
   return createHmac("sha256", secret()).update(`arthur:${expires}`).digest("base64url");
 }
@@ -27,7 +31,7 @@ export function verifyPassword(password: string): boolean {
 
 export function isAuthorized(request: NextRequest): boolean {
   if (process.env.NODE_ENV !== "production" && !process.env.CRM_ACCESS_PASSWORD) return true;
-  if (!secret()) return false;
+  if (!sessionSecretConfigured()) return false;
   const value = request.cookies.get(SESSION_COOKIE)?.value || "";
   const [expires, received] = value.split(".");
   if (!expires || !received || Number(expires) < Date.now() / 1000) return false;
