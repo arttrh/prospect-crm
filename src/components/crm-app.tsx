@@ -99,8 +99,27 @@ function Login({ onSuccess }: { onSuccess: () => Promise<void> }) {
   const [loading, setLoading] = useState(false);
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setLoading(true); setError("");
-    try { await api("/api/auth/login", { method: "POST", body: JSON.stringify({ password }) }); await onSuccess(); }
-    catch (err) { setError(err instanceof Error ? err.message : "Senha incorreta"); }
+    console.info("[auth] iniciando login");
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      const details = { status: response.status, error: typeof payload.error === "string" ? payload.error : undefined };
+      if (!response.ok) {
+        console.error("[auth] login recusado", details);
+        throw new Error(details.error || "Não foi possível concluir a ação");
+      }
+      console.info("[auth] login aceito", { status: response.status });
+      await onSuccess();
+      console.info("[auth] sessão confirmada");
+    }
+    catch (err) {
+      console.error("[auth] falha no fluxo de login", err instanceof Error ? { message: err.message } : {});
+      setError(err instanceof Error ? err.message : "Senha incorreta");
+    }
     finally { setLoading(false); }
   }
   return (
@@ -230,7 +249,7 @@ export function CrmApp() {
   const [database, setDatabase] = useState("");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selected, setSelected] = useState<Lead | null>(null);
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState("kanban");
   const [query, setQuery] = useState(""); const [status, setStatus] = useState("ALL"); const [segment, setSegment] = useState("ALL"); const [channel, setChannel] = useState("ALL");
   const [loading, setLoading] = useState(false); const [error, setError] = useState("");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 7 } }));
@@ -271,6 +290,7 @@ export function CrmApp() {
     followups: leads.filter((lead) => lead.status === "FOLLOW_UP" || (lead.nextFollowUpAt && new Date(lead.nextFollowUpAt) <= new Date())).length,
     reunioes: leads.filter((lead) => lead.status === "MEETING").length,
   };
+  const isPipelineView = !["reports", "followups", "pierre"].includes(tab);
 
   async function moveLead(event: DragEndEvent) {
     const target = event.over?.id as LeadStatus | undefined;
@@ -296,8 +316,8 @@ export function CrmApp() {
       </header>
       <main className="content">
         <nav className="main-nav" aria-label="Navegação principal"><button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}><LayoutDashboard size={17} /> Visão geral</button><button className={tab === "reports" ? "active" : ""} onClick={() => setTab("reports")}><BarChart3 size={17} /> Relatórios</button><button className={tab === "followups" ? "active" : ""} onClick={() => setTab("followups")}><CalendarDays size={17} /> Follow-ups</button><button className={tab === "pierre" ? "active" : ""} onClick={() => setTab("pierre")}><PlugZap size={17} /> Pierre</button></nav>
-        {tab !== "overview" && <>{tab === "reports" && <Reports leads={leads} />}{tab === "followups" && <FollowUps leads={leads} onOpen={setSelected} />}{tab === "pierre" && <PierrePanel />}</>}
-        {tab === "overview" && <><section className="hero-row"><div><Text color="gray">Bom trabalho, Arthur</Text><Heading size="7">Pipeline de prospecção</Heading><Text color="gray">Só entram empresas com ao menos um canal de contato utilizável.</Text></div><Button size="3" onClick={() => setTab("overview")}><Plus size={18} /> Importar do Apify</Button></section>
+        {!isPipelineView && <>{tab === "reports" && <Reports leads={leads} />}{tab === "followups" && <FollowUps leads={leads} onOpen={setSelected} />}{tab === "pierre" && <PierrePanel />}</>}
+        {isPipelineView && <><section className="hero-row"><div><Text color="gray">Bom trabalho, Arthur</Text><Heading size="7">Pipeline de prospecção</Heading><Text color="gray">Só entram empresas com ao menos um canal de contato utilizável.</Text></div><Button size="3" onClick={() => setTab("import")}><Plus size={18} /> Importar do Apify</Button></section>
         {error && <Callout.Root color="red"><Callout.Icon><X size={16} /></Callout.Icon><Callout.Text>{error}</Callout.Text></Callout.Root>}
         <section className="stats-grid">
           <Card><Text color="gray">Leads válidos</Text><Heading size="8">{stats.total}</Heading><span className="stat-note">com canal disponível</span></Card>
@@ -344,7 +364,7 @@ function Reports({ leads }: { leads: Lead[] }) {
 }
 
 function FollowUps({ leads, onOpen }: { leads: Lead[]; onOpen: (lead: Lead) => void }) {
-  const now = Date.now(); const followups = leads.filter((lead) => lead.nextFollowUpAt || lead.status === "FOLLOW_UP").sort((a, b) => (a.nextFollowUpAt || "").localeCompare(b.nextFollowUpAt || ""));
+  const [now] = useState(() => Date.now()); const followups = leads.filter((lead) => lead.nextFollowUpAt || lead.status === "FOLLOW_UP").sort((a, b) => (a.nextFollowUpAt || "").localeCompare(b.nextFollowUpAt || ""));
   return <section className="insights-page" aria-labelledby="followups-title"><div className="page-heading"><div><span className="eyebrow">Ações manuais</span><Heading id="followups-title" size="7">Follow-ups</Heading><Text color="gray">Revise cada próximo contato antes de agir.</Text></div><span className="demo-badge"><CalendarDays size={15} /> {followups.length} pendentes</span></div><div className="followup-columns"><article className="followup-lane"><div className="lane-heading"><AlertTriangle size={17} /><h2>Atrasados</h2></div>{followups.filter((lead) => lead.nextFollowUpAt && new Date(lead.nextFollowUpAt).getTime() < now).map((lead) => <FollowUpItem key={lead.id} lead={lead} onOpen={onOpen} overdue />)}{!followups.some((lead) => lead.nextFollowUpAt && new Date(lead.nextFollowUpAt).getTime() < now) && <p className="empty-state">Nenhum contato atrasado.</p>}</article><article className="followup-lane"><div className="lane-heading"><CalendarClock size={17} /><h2>Hoje e próximos</h2></div>{followups.filter((lead) => !lead.nextFollowUpAt || new Date(lead.nextFollowUpAt).getTime() >= now).map((lead) => <FollowUpItem key={lead.id} lead={lead} onOpen={onOpen} />)}{!followups.length && <p className="empty-state">Nenhum follow-up agendado.</p>}</article></div></section>;
 }
 
