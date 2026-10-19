@@ -9,7 +9,8 @@
     "test:template": "node --import ./vendor/diego-astro/node_modules/tsx/dist/loader.mjs --test tests/template-engine.test.ts",
     "start": "next start",
     "lint": "eslint",
-    "test": "playwright test"
+    "test": "npm run test:auth && playwright test",
+    "test:auth": "node --experimental-strip-types --test tests/auth.test.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "6.3.1",
