@@ -32,8 +32,8 @@
 
 ### Em andamento
 
-- Aprovação final dos protótipos antes de implementar o frontend.
-- Preparação do escopo de implementação responsiva e validação posterior pelo QA.
+- Implementação visual aprovada concluída em `src/components/crm-app.tsx` e `src/app/globals.css`.
+- QA visual/regressão revisou desktop/mobile; falta validação executável quando as dependências estiverem disponíveis.
 
 ### Bloqueado
 
@@ -41,7 +41,7 @@
 - `PIERRE_API_KEY` deve permanecer server-only; nunca usar `NEXT_PUBLIC_*`, frontend, URL, logs, chat, Pencil ou Git.
 - O CTA `Abrir app Pierre` é conceitual até a URL oficial ser fornecida.
 - Logo Pierre no Pencil é vetor aproximado; o asset local não pôde ser importado diretamente.
-- Nenhuma mudança de frontend foi implementada ou validada por Playwright/QA nesta etapa.
+- `scripts/agent-brief.mjs`, lint, TypeScript, Playwright e Next.js build permanecem bloqueados por ausência de CLIs/dependências neste checkout.
 
 ## 3. Próximos passos
 
