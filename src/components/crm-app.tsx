@@ -25,8 +25,22 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 async function initialData() {
-  const session = await api<{ authenticated: boolean; database: string }>("/api/auth/session");
-  const data = await api<{ leads: Lead[] }>("/api/leads");
+  let session: { authenticated: boolean; database: string };
+  try {
+    session = await api<{ authenticated: boolean; database: string }>("/api/auth/session");
+    console.info("[auth] sessão validada", { database: session.database });
+  } catch (error) {
+    console.error("[auth] validação de sessão falhou", error instanceof Error ? { message: error.message } : {});
+    throw error;
+  }
+  let data: { leads: Lead[] };
+  try {
+    data = await api<{ leads: Lead[] }>("/api/leads");
+    console.info("[auth] leads carregados", { total: data.leads.length });
+  } catch (error) {
+    console.error("[auth] carregamento de leads falhou", error instanceof Error ? { message: error.message } : {});
+    throw error;
+  }
   return { session, leads: data.leads };
 }
 
