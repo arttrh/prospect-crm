@@ -230,7 +230,8 @@ export function CrmApp() {
   const [database, setDatabase] = useState("");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selected, setSelected] = useState<Lead | null>(null);
-  const [tab, setTab] = useState("overview");
+  const [view, setView] = useState("overview");
+  const [pipelineTab, setPipelineTab] = useState("kanban");
   const [query, setQuery] = useState(""); const [status, setStatus] = useState("ALL"); const [segment, setSegment] = useState("ALL"); const [channel, setChannel] = useState("ALL");
   const [loading, setLoading] = useState(false); const [error, setError] = useState("");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 7 } }));
@@ -292,9 +293,9 @@ export function CrmApp() {
         <div className="header-actions"><span className={`database-badge db-${database}`}>{database === "oracle" ? "Oracle Cloud" : database === "supabase-transition" ? "Supabase · transição" : "Demonstração"}</span><Button variant="ghost" onClick={loadLeads}><RefreshCw size={16} /> Atualizar</Button><Button variant="ghost" color="gray" onClick={async () => { await api("/api/auth/logout", { method: "POST" }); setAuth("no"); }}><LogOut size={16} /> Sair</Button></div>
       </header>
       <main className="content">
-        <nav className="main-nav" aria-label="Navegação principal"><button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}><LayoutDashboard size={17} /> Visão geral</button><button className={tab === "reports" ? "active" : ""} onClick={() => setTab("reports")}><BarChart3 size={17} /> Relatórios</button><button className={tab === "followups" ? "active" : ""} onClick={() => setTab("followups")}><CalendarDays size={17} /> Follow-ups</button><button className={tab === "pierre" ? "active" : ""} onClick={() => setTab("pierre")}><PlugZap size={17} /> Pierre</button></nav>
-        {tab !== "overview" && <>{tab === "reports" && <Reports leads={leads} />}{tab === "followups" && <FollowUps leads={leads} onOpen={setSelected} />}{tab === "pierre" && <PierrePanel />}</>}
-        {tab === "overview" && <><section className="hero-row"><div><Text color="gray">Bom trabalho, Arthur</Text><Heading size="7">Pipeline de prospecção</Heading><Text color="gray">Só entram empresas com ao menos um canal de contato utilizável.</Text></div><Button size="3" onClick={() => setTab("overview")}><Plus size={18} /> Importar do Apify</Button></section>
+        <nav className="main-nav" aria-label="Navegação principal"><button className={view === "overview" ? "active" : ""} onClick={() => setView("overview")}><LayoutDashboard size={17} /> Visão geral</button><button className={view === "reports" ? "active" : ""} onClick={() => setView("reports")}><BarChart3 size={17} /> Relatórios</button><button className={view === "followups" ? "active" : ""} onClick={() => setView("followups")}><CalendarDays size={17} /> Follow-ups</button><button className={view === "pierre" ? "active" : ""} onClick={() => setView("pierre")}><PlugZap size={17} /> Pierre</button></nav>
+        {view !== "overview" && <>{view === "reports" && <Reports leads={leads} />}{view === "followups" && <FollowUps leads={leads} onOpen={setSelected} />}{view === "pierre" && <PierrePanel />}</>}
+        {view === "overview" && <><section className="hero-row"><div><Text color="gray">Bom trabalho, Arthur</Text><Heading size="7">Pipeline de prospecção</Heading><Text color="gray">Só entram empresas com ao menos um canal de contato utilizável.</Text></div><Button size="3" onClick={() => { setView("overview"); setPipelineTab("import"); }}><Plus size={18} /> Importar do Apify</Button></section>
         {error && <Callout.Root color="red"><Callout.Icon><X size={16} /></Callout.Icon><Callout.Text>{error}</Callout.Text></Callout.Root>}
         <section className="stats-grid">
           <Card><Text color="gray">Leads válidos</Text><Heading size="8">{stats.total}</Heading><span className="stat-note">com canal disponível</span></Card>
@@ -302,7 +303,7 @@ export function CrmApp() {
           <Card><Text color="gray">Follow-ups</Text><Heading size="8">{stats.followups}</Heading><span className="stat-note">pendentes ou vencidos</span></Card>
           <Card><Text color="gray">Reuniões</Text><Heading size="8">{stats.reunioes}</Heading><span className="stat-note">no pipeline</span></Card>
         </section>
-        <Tabs.Root className="tabs-root" value={tab} onValueChange={setTab}>
+        <Tabs.Root className="tabs-root" value={pipelineTab} onValueChange={setPipelineTab}>
           <div className="toolbar-row">
             <Tabs.List className="tabs-list"><Tabs.Trigger value="kanban"><LayoutDashboard size={16} /> Kanban</Tabs.Trigger><Tabs.Trigger value="list"><List size={16} /> Lista</Tabs.Trigger><Tabs.Trigger value="import"><Plus size={16} /> Importar</Tabs.Trigger></Tabs.List>
             <div className="filters">
