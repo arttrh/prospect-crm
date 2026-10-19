@@ -10,8 +10,13 @@ export const maxDuration = 60;
 export async function POST(request: NextRequest) {
   const unauthorized = requireAuth(request);
   if (unauthorized) return unauthorized;
+  let body: Record<string, unknown>;
   try {
-    const body = await request.json();
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
+  }
+  try {
     const datasetId = String(body.datasetId || "").trim();
     const segment = String(body.segment || "Geral").trim().slice(0, 80);
     const maxReviews = Math.max(0, Math.min(Number(body.maxReviews ?? 25), 100000));
