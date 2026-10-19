@@ -99,8 +99,27 @@ function Login({ onSuccess }: { onSuccess: () => Promise<void> }) {
   const [loading, setLoading] = useState(false);
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setLoading(true); setError("");
-    try { await api("/api/auth/login", { method: "POST", body: JSON.stringify({ password }) }); await onSuccess(); }
-    catch (err) { setError(err instanceof Error ? err.message : "Senha incorreta"); }
+    console.info("[auth] iniciando login");
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      const details = { status: response.status, error: typeof payload.error === "string" ? payload.error : undefined };
+      if (!response.ok) {
+        console.error("[auth] login recusado", details);
+        throw new Error(details.error || "Não foi possível concluir a ação");
+      }
+      console.info("[auth] login aceito", { status: response.status });
+      await onSuccess();
+      console.info("[auth] sessão confirmada");
+    }
+    catch (err) {
+      console.error("[auth] falha no fluxo de login", err instanceof Error ? { message: err.message } : {});
+      setError(err instanceof Error ? err.message : "Senha incorreta");
+    }
     finally { setLoading(false); }
   }
   return (
@@ -230,7 +249,7 @@ export function CrmApp() {
   const [database, setDatabase] = useState("");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selected, setSelected] = useState<Lead | null>(null);
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState("kanban");
   const [query, setQuery] = useState(""); const [status, setStatus] = useState("ALL"); const [segment, setSegment] = useState("ALL"); const [channel, setChannel] = useState("ALL");
   const [loading, setLoading] = useState(false); const [error, setError] = useState("");
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 7 } }));
