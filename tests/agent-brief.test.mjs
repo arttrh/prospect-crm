@@ -81,6 +81,7 @@ test("classifies shared and unknown paths as shared", () => {
     "src/lib/demo-data.ts",
     "src/lib/types.ts",
     "package.json",
+    "unknown/file.txt",
   ]) {
     const result = run(path);
     assert.equal(result.status, 0, result.stderr);
