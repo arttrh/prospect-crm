@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const run = (...paths) =>
@@ -38,10 +39,31 @@ test("classifies backend routes and server-only libraries", () => {
       expected(["backend"], [
         "npm run lint",
         "npx tsc --noEmit",
-        "node --test tests/auth.test.mjs tests/leads.test.mjs tests/login.test.mjs",
+        "npm run test:auth",
+        "node --test tests/leads.test.mjs",
+        "node --test tests/login.test.mjs",
       ]),
     );
   }
+});
+
+test("normalizes relative prefixes without accepting absolute paths", () => {
+  const relative = run("./src/app/api/leads/route.ts");
+  assert.equal(relative.status, 0, relative.stderr);
+  assert.deepEqual(
+    JSON.parse(relative.stdout),
+    expected(["backend"], [
+      "npm run lint",
+      "npx tsc --noEmit",
+      "npm run test:auth",
+      "node --test tests/leads.test.mjs",
+      "node --test tests/login.test.mjs",
+    ]),
+  );
+
+  const absolute = run(`${process.cwd()}/src/app/api/leads/route.ts`);
+  assert.equal(absolute.status, 0, absolute.stderr);
+  assert.deepEqual(JSON.parse(absolute.stdout), expected(["shared"]));
 });
 
 test("classifies UI files", () => {
@@ -83,19 +105,23 @@ test("classifies controller files", () => {
   }
 });
 
-test("classifies shared and unknown paths as shared", () => {
+test("classifies shared paths as shared", () => {
   for (const path of [
     "src/lib/contact.ts",
     "src/lib/demo-data.ts",
     "src/lib/types.ts",
     "package.json",
-    "tests/unknown.test.ts",
-    "unknown/file.txt",
   ]) {
     const result = run(path);
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(JSON.parse(result.stdout), expected(["shared"]));
   }
+});
+
+test("classifies an unknown path as shared", () => {
+  const result = run("unknown/file.txt");
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout), expected(["shared"]));
 });
 
 test("marks a backend and UI list as cross-area", () => {
@@ -106,7 +132,9 @@ test("marks a backend and UI list as cross-area", () => {
     expected(["backend", "ui"], [
       "npm run lint",
       "npx tsc --noEmit",
-      "node --test tests/auth.test.mjs tests/leads.test.mjs tests/login.test.mjs",
+      "npm run test:auth",
+      "node --test tests/leads.test.mjs",
+      "node --test tests/login.test.mjs",
       "npx playwright test",
     ]),
   );
@@ -115,4 +143,9 @@ test("marks a backend and UI list as cross-area", () => {
 test("exits with code 2 when no paths are provided", () => {
   const result = run();
   assert.equal(result.status, 2);
+});
+
+test("runs agent-brief before the rest of npm test", () => {
+  const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
+  assert.match(packageJson.scripts.test, /^npm run test:agent-brief && /);
 });

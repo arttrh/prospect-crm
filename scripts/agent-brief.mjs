@@ -12,6 +12,8 @@ const serverLibraries = new Set([
 ]);
 
 function classify(path) {
+  path = path.replace(/^(?:\.\/)+/, "");
+
   if (
     /^src\/app\/(?:.*\/)?route\.ts$/.test(path) ||
     serverLibraries.has(path) ||
@@ -43,7 +45,11 @@ const areas = [...new Set(paths.map(classify))];
 const checks = ["npm run lint", "npx tsc --noEmit"];
 
 if (areas.includes("backend"))
-  checks.push("node --test tests/auth.test.mjs tests/leads.test.mjs tests/login.test.mjs");
+  checks.push(
+    "npm run test:auth",
+    "node --test tests/leads.test.mjs",
+    "node --test tests/login.test.mjs",
+  );
 if (areas.includes("ui")) checks.push("npx playwright test");
 
 console.log(JSON.stringify({ areas, crossArea: areas.length > 1, checks }));
