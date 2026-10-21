@@ -76,8 +76,8 @@
 - Delegar pelo Orca supervisionado com Task/Dispatch, spec curta, arquivos fechados, ownership e aceite observável; preservar cliente, modelo e autenticação.
 - Manter um executor autoritativo por worktree e uma tentativa autoritativa por tarefa, sem compartilhar arquivos, servidor ou artefatos entre execuções concorrentes.
 - O executor envia perguntas, heartbeat e bloqueios pelo canal da Dispatch e, ao terminar, envia `worker_done` exatamente uma vez com resultado, arquivos e evidências.
-- O Controller confere relatório, Git e checks; depois reutiliza formalmente ou encerra/libera o worker. Ausência de resposta ou estado incerto não autoriza retry concorrente.
+- Após aceitar o `worker_done`, o Controller confere relatório, Git e checks e decide entre reutilizar o worker, executar `worker-retain` ou executar `worker-release`. Ausência de resposta ou estado incerto não autoriza retry concorrente.
 - Em interrupção, concluir o ponto atômico e gravar `docs/checkpoints/<task-id>.md`, sem segredos nem logs completos.
 - Relatórios têm no máximo 5 linhas; detalhes duráveis ficam na spec ou no checkpoint.
 - Atualizar este arquivo apenas com fatos confirmados; não converter branch, teste, preview ou protótipo em conclusão sem evidência.
-- Commit, push, PR, merge e contato externo exigem seus gates explícitos; o gate desta tarefa cobre somente o commit de `docs/STATE.md`.
+- Commit, push, PR, merge e contato externo exigem seus gates explícitos.
