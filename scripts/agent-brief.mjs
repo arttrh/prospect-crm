@@ -26,12 +26,13 @@ function classify(path) {
     /^tests\/(?:crm|site-preview)\.spec\.ts$/.test(path)
   )
     return "ui";
-  if (/^tests\//.test(path) || path === "playwright.config.ts" || /^\.github\/workflows\//.test(path))
+  if (path === "playwright.config.ts" || /^\.github\/workflows\//.test(path))
     return "qa";
   if (
     path === "AGENTS.md" ||
     /^docs\//.test(path) ||
     path === "scripts/agent-brief.mjs" ||
+    path === "tests/agent-brief.test.mjs" ||
     path === "miniagents.md"
   )
     return "controller";

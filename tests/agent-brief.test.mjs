@@ -62,11 +62,7 @@ test("classifies UI files", () => {
 });
 
 test("classifies QA files", () => {
-  for (const path of [
-    "tests/agent-brief.test.mjs",
-    "playwright.config.ts",
-    ".github/workflows/tests.yml",
-  ]) {
+  for (const path of ["playwright.config.ts", ".github/workflows/tests.yml"]) {
     const result = run(path);
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(JSON.parse(result.stdout), expected(["qa"]));
@@ -74,7 +70,13 @@ test("classifies QA files", () => {
 });
 
 test("classifies controller files", () => {
-  for (const path of ["AGENTS.md", "docs/STATE.md", "scripts/agent-brief.mjs", "miniagents.md"]) {
+  for (const path of [
+    "AGENTS.md",
+    "docs/STATE.md",
+    "scripts/agent-brief.mjs",
+    "tests/agent-brief.test.mjs",
+    "miniagents.md",
+  ]) {
     const result = run(path);
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(JSON.parse(result.stdout), expected(["controller"]));
@@ -87,6 +89,7 @@ test("classifies shared and unknown paths as shared", () => {
     "src/lib/demo-data.ts",
     "src/lib/types.ts",
     "package.json",
+    "tests/unknown.test.ts",
     "unknown/file.txt",
   ]) {
     const result = run(path);
