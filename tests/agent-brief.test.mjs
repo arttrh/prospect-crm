@@ -26,6 +26,10 @@ test("classifies backend routes and server-only libraries", () => {
     "src/lib/site-template.ts",
     "oracle/schema.sql",
     "supabase/functions/import.ts",
+    "tests/auth.test.mjs",
+    "tests/leads.test.mjs",
+    "tests/login.test.mjs",
+    "tests/template-engine.test.ts",
   ]) {
     const result = run(path);
     assert.equal(result.status, 0, result.stderr);
@@ -45,6 +49,8 @@ test("classifies UI files", () => {
     "src/components/crm-app.tsx",
     "src/app/page.tsx",
     "src/app/globals.css",
+    "tests/crm.spec.ts",
+    "tests/site-preview.spec.ts",
   ]) {
     const result = run(path);
     assert.equal(result.status, 0, result.stderr);
@@ -57,7 +63,7 @@ test("classifies UI files", () => {
 
 test("classifies QA files", () => {
   for (const path of [
-    "tests/leads.test.mjs",
+    "tests/agent-brief.test.mjs",
     "playwright.config.ts",
     ".github/workflows/tests.yml",
   ]) {

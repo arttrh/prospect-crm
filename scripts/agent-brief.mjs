@@ -15,10 +15,17 @@ function classify(path) {
   if (
     /^src\/app\/(?:.*\/)?route\.ts$/.test(path) ||
     serverLibraries.has(path) ||
-    /^(oracle|supabase)\//.test(path)
+    /^(oracle|supabase)\//.test(path) ||
+    /^tests\/(?:auth|leads|login)\.test\.mjs$/.test(path) ||
+    path === "tests/template-engine.test.ts"
   )
     return "backend";
-  if (/^src\/components\//.test(path) || /^src\/app\/.*\.(tsx|css)$/.test(path)) return "ui";
+  if (
+    /^src\/components\//.test(path) ||
+    /^src\/app\/.*\.(tsx|css)$/.test(path) ||
+    /^tests\/(?:crm|site-preview)\.spec\.ts$/.test(path)
+  )
+    return "ui";
   if (/^tests\//.test(path) || path === "playwright.config.ts" || /^\.github\/workflows\//.test(path))
     return "qa";
   if (
