@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "npm run test:auth && playwright test",
+    "test:agent-brief": "node --test tests/agent-brief.test.mjs",
     "test:auth": "node --experimental-strip-types --test tests/auth.test.mjs"
   },
   "dependencies": {
