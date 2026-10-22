@@ -11,7 +11,10 @@
     "lint": "eslint",
     "test": "npm run test:agent-brief && npm run test:auth && playwright test",
     "test:agent-brief": "node --test tests/agent-brief.test.mjs",
-    "test:auth": "node --experimental-strip-types --test tests/auth.test.mjs"
+    "test:auth": "node --experimental-strip-types --test tests/auth.test.mjs",
+    "test:login": "node --test tests/login.test.mjs",
+    "test:leads": "node --test tests/leads.test.mjs",
+    "test:backend": "node --test tests/next-test-server.test.mjs && npm run test:auth && npm run test:login && npm run test:leads"
   },
   "dependencies": {
     "@dnd-kit/core": "6.3.1",

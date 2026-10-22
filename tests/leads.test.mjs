@@ -1,37 +1,20 @@
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
 import test from "node:test";
+import { startNextTestServer } from "./helpers/next-test-server.mjs";
 
 const port = 43000 + Math.floor(Math.random() * 1000);
 const baseUrl = `http://127.0.0.1:${port}`;
 
-async function waitForServer(process) {
-  let output = "";
-  process.stderr.on("data", (chunk) => { output += chunk; });
-  process.stdout.on("data", (chunk) => { output += chunk; });
-  for (let attempt = 0; attempt < 120; attempt += 1) {
-    try {
-      const response = await fetch(`${baseUrl}/api/auth/session`);
-      if (response.status === 401) return;
-    } catch {}
-    await new Promise((resolve) => setTimeout(resolve, 250));
-  }
-  throw new Error(`Servidor Next não iniciou:\n${output}`);
-}
-
 test("PATCH /api/leads exige autenticação e rejeita campos inválidos", { timeout: 120_000 }, async () => {
-  const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "dev", "--hostname", "127.0.0.1", "--port", String(port)], {
-    env: { ...process.env, CRM_ACCESS_PASSWORD: "test-password", SESSION_SECRET: "test-session-secret", NEXT_TELEMETRY_DISABLED: "1" },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+  const server = await startNextTestServer({ port, env: { CRM_ACCESS_PASSWORD: "test-password", SESSION_SECRET: "test-session-secret" } });
 
   try {
-    await waitForServer(server);
 
     const unauthorized = await fetch(`${baseUrl}/api/leads`, {
       method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: "demo-1", status: "REPLIED" }),
     });
     assert.equal(unauthorized.status, 401);
+    assert.equal((await fetch(`${baseUrl}/api/leads`)).status, 401);
 
     const login = await fetch(`${baseUrl}/api/auth/login`, {
       method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: "test-password" }),
@@ -39,6 +22,8 @@ test("PATCH /api/leads exige autenticação e rejeita campos inválidos", { time
     assert.equal(login.status, 200);
     const cookie = login.headers.get("set-cookie")?.split(";")[0];
     assert.ok(cookie);
+
+    assert.equal((await fetch(`${baseUrl}/api/auth/session`, { headers: { cookie } })).status, 200);
 
     async function patch(body) {
       return fetch(`${baseUrl}/api/leads`, {
@@ -57,6 +42,13 @@ test("PATCH /api/leads exige autenticação e rejeita campos inválidos", { time
       assert.equal(response.status, 400);
       assert.deepEqual(await response.json(), { error: "Dados inválidos" });
     }
+
+    const missingId = await patch({ status: "REPLIED" });
+    assert.equal(missingId.status, 400);
+    assert.deepEqual(await missingId.json(), { error: "ID obrigatório" });
+    const missingLead = await patch({ id: "missing-lead", status: "REPLIED" });
+    assert.equal(missingLead.status, 500);
+    assert.deepEqual(await missingLead.json(), { error: "Erro interno. Tente novamente mais tarde." });
 
     assert.equal((await patch({ id: "demo-1", status: "NOT_A_STATUS" })).status, 400);
     assert.equal((await patch({ id: "demo-1", preferredChannel: "SMS" })).status, 400);
@@ -87,8 +79,13 @@ test("PATCH /api/leads exige autenticação e rejeita campos inválidos", { time
         assert.deepEqual(await response.json(), { error: "Dados inválidos" });
       }
     }
+
+    const logout = await fetch(`${baseUrl}/api/auth/logout`, { method: "POST", headers: { cookie } });
+    assert.equal(logout.status, 200);
+    const expiredCookie = logout.headers.get("set-cookie")?.split(";")[0];
+    assert.ok(expiredCookie);
+    assert.equal((await fetch(`${baseUrl}/api/auth/session`, { headers: { cookie: expiredCookie } })).status, 401);
   } finally {
-    server.kill();
-    await new Promise((resolve) => server.once("exit", resolve));
+    await server.stop();
   }
 });
