@@ -35,6 +35,7 @@
 
 - Implementação visual aprovada concluída em `src/components/crm-app.tsx` e `src/app/globals.css`.
 - QA visual/regressão revisou desktop/mobile; falta validação executável quando as dependências estiverem disponíveis.
+- Issue #12: spec registra ownership compartilhado Backend/QA para `package.json` e `tests/**`; a proveniência Graphify foi registrada e confirmada contra o código vivo/diff. O gate foi reavaliado: não há autorização explícita para commit, portanto commit, push, PR e merge seguem bloqueados.
 
 ### Bloqueado
 
