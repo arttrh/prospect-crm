@@ -71,6 +71,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .search-box input { width: 100%; border: 0; outline: 0; color: var(--text); background: transparent; }
 .select-trigger { min-height: 38px; display: inline-flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; color: #d8dae3; background: rgba(14,16,24,.86); cursor: pointer; }
 .select-trigger:hover { border-color: rgba(139,124,255,.36); }
+.kanban-card .select-trigger { width: 100%; min-height: 44px; }
 .select-content { z-index: 80; min-width: 195px; overflow: hidden; padding: 6px; border: 1px solid var(--line-strong); border-radius: 12px; color: var(--text); background: rgba(22,24,34,.98); box-shadow: 0 24px 70px rgba(0,0,0,.54); backdrop-filter: blur(20px); }
 .select-item { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 9px 10px; border-radius: 8px; font-size: 13px; outline: none; cursor: pointer; }
 .select-item[data-highlighted] { background: rgba(139,124,255,.14); }
@@ -86,10 +87,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .kanban-card:hover { transform: translateY(-2px); border-color: rgba(139,124,255,.28); box-shadow: 0 15px 35px rgba(0,0,0,.28); }
 .kanban-card.dragging { z-index: 50; opacity: .78; box-shadow: 0 25px 60px rgba(0,0,0,.55); }
 .card-title-row { align-items: flex-start; gap: 7px; }
-.card-title-row > div { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.card-title-row strong { font-size: 13px; line-height: 1.4; letter-spacing: -.01em; }
-.card-title-row span { color: var(--muted); font-size: 11px; }
-.drag-handle { flex: 0 0 auto; width: 22px; height: 24px; display: grid; place-items: center; margin-left: -6px; border: 0; color: #656b7e; background: transparent; cursor: grab; }
+.lead-card-open { min-width: 0; min-height: 44px; display: flex; flex: 1; flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; padding: 0; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer; }
+.lead-card-open strong { font-size: 13px; line-height: 1.4; letter-spacing: -.01em; }
+.lead-card-open span { color: var(--muted); font-size: 11px; }
+.drag-handle { flex: 0 0 auto; width: 44px; height: 44px; display: grid; place-items: center; margin-left: -6px; border: 0; color: #656b7e; background: transparent; cursor: grab; }
 .lead-meta-row { gap: 10px; flex-wrap: wrap; color: #a5a9b7; font-size: 11px; }
 .lead-meta-row span, .followup-line, .lead-facts span, .lead-facts a { display: inline-flex; align-items: center; gap: 4px; }
 .channel-dots, .table-channels { display: flex; gap: 5px; flex-wrap: wrap; }
