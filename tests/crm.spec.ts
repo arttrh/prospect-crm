@@ -2,9 +2,10 @@ import { expect, test } from "@playwright/test";
 
 const statuses = ["Novo", "Enviado", "Follow-up", "Respondeu", "Site enviado", "Reunião", "Fechado", "Desqualificado"];
 
-test("abre o CRM, o Kanban e os detalhes do lead", async ({ page }) => {
+test("abre o painel, o Kanban e os detalhes do lead", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Pipeline de prospecção" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "O que merece atenção" })).toBeVisible();
+  await page.getByRole("button", { name: "Pipeline", exact: true }).click();
   await page.getByRole("tab", { name: /Kanban/i }).click();
   await expect(page.getByText("Clínica Horizonte", { exact: true })).toBeVisible();
   await page.getByText("Clínica Horizonte", { exact: true }).click();
@@ -15,6 +16,7 @@ test("abre o CRM, o Kanban e os detalhes do lead", async ({ page }) => {
 
 test("mostra o formulário de importação do Apify", async ({ page }) => {
   await page.goto("/");
+  await page.getByRole("button", { name: "Pipeline", exact: true }).click();
   await page.getByRole("tab", { name: /Importar/i }).click();
   await expect(page.getByRole("heading", { name: "Importar dataset do Apify" })).toBeVisible();
   await expect(page.getByText(/Nenhum Actor é executado/i)).toBeVisible();
@@ -23,12 +25,14 @@ test("mostra o formulário de importação do Apify", async ({ page }) => {
 test("mantém os controles utilizáveis em tela móvel", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "mobile", "Somente no projeto móvel");
   await page.goto("/");
+  await page.getByRole("button", { name: "Pipeline", exact: true }).click();
   await expect(page.getByRole("tab", { name: /Kanban/i })).toBeVisible();
   await expect(page.getByPlaceholder("Buscar empresa...")).toBeVisible();
 });
 
 test("teclado abre o lead, devolve o foco e move o status", async ({ page }) => {
   await page.goto("/");
+  await page.getByRole("button", { name: "Pipeline", exact: true }).click();
   const opener = page.getByRole("button", { name: "Abrir Clínica Horizonte" });
   await opener.focus();
   await page.keyboard.press("Enter");
@@ -44,7 +48,7 @@ test("teclado abre o lead, devolve o foco e move o status", async ({ page }) => 
 
 test("navegação preserva destinos e destaca o destino atual", async ({ page }) => {
   await page.goto("/");
-  for (const [name, heading] of [["Relatórios", "Relatórios"], ["Follow-ups", "Follow-ups"], ["Pierre", "Integração Pierre"], ["Visão geral", "Pipeline de prospecção"]] as const) {
+  for (const [name, heading] of [["Relatórios", "Relatórios"], ["Follow-ups", "Follow-ups"], ["Pierre · conceito", "Integração Pierre"], ["Visão geral", "O que merece atenção"]] as const) {
     const destination = page.getByRole("button", { name, exact: true });
     await destination.click();
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();
@@ -55,6 +59,7 @@ test("navegação preserva destinos e destaca o destino atual", async ({ page })
 test("mobile mantém oito estágios acessíveis, sem overflow e com alvos de toque", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "mobile", "Somente no projeto móvel");
   await page.goto("/");
+  await page.getByRole("button", { name: "Pipeline", exact: true }).click();
   await expect(page.getByRole("button", { name: "Abrir Clínica Horizonte" })).toBeVisible();
   await expect(page.getByRole("combobox", { name: "Mover status de Clínica Horizonte" })).toBeVisible();
   await expect(page.getByText("Arraste um lead para cá")).toHaveCount(6);

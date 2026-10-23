@@ -8,8 +8,8 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { Button, Callout, Card, Flex, Heading, Text, TextArea, TextField, Theme } from "@radix-ui/themes";
 import {
   AlertTriangle, ArrowRight, BarChart3, Bot, Building2, CalendarClock, CalendarDays, Camera, Check, CheckCircle2, ChevronDown, Code2, ExternalLink, GripVertical,
-  LayoutDashboard, List, LoaderCircle, LogOut, Mail, MapPin, MessageCircle, PlugZap, Plus,
-  RefreshCw, Search, ShieldCheck, Sparkles, Star, X,
+  Info, LayoutDashboard, List, LoaderCircle, LogOut, Mail, MapPin, MessageCircle, PlugZap, Plus,
+  RefreshCw, Search, ShieldCheck, SlidersHorizontal, Sparkles, Star, Users, X,
 } from "lucide-react";
 import { availableChannels, defaultMessage, emailUrl, instagramUrl, whatsappUrl } from "@/lib/contact";
 import { DEMO_LEADS } from "@/lib/demo-data";
@@ -219,7 +219,6 @@ function LeadDialog({ lead, onClose, onSaved, onCloseAutoFocus }: { lead: Lead |
 
 export function CrmApp() {
   const [auth, setAuth] = useState<"loading" | "yes" | "no">(UI_PREVIEW_MODE ? "yes" : "loading");
-  const [database, setDatabase] = useState(UI_PREVIEW_MODE ? "demo" : "");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selected, setSelected] = useState<Lead | null>(null);
   const opener = useRef<HTMLElement | null>(null);
@@ -244,7 +243,7 @@ export function CrmApp() {
     }
     initialData().then((data) => {
       if (!active) return;
-      setAuth("yes"); setDatabase(data.session.database); setLeads(data.leads);
+      setAuth("yes"); setLeads(data.leads);
     }).catch(() => { if (active) setAuth("no"); });
     return () => { active = false; };
   }, []);
@@ -261,6 +260,9 @@ export function CrmApp() {
     followups: leads.filter((lead) => lead.status === "FOLLOW_UP" || (lead.nextFollowUpAt && new Date(lead.nextFollowUpAt) <= new Date())).length,
     reunioes: leads.filter((lead) => lead.status === "MEETING").length,
   };
+  const pipelineSnapshot = KANBAN_STATUSES.map((stage) => ({ label: STATUS_LABELS[stage], count: leads.filter((lead) => lead.status === stage).length }));
+  const snapshotMax = Math.max(1, ...pipelineSnapshot.map((stage) => stage.count));
+  const upcomingFollowUps = leads.filter((lead) => lead.nextFollowUpAt).slice(0, 3);
   function openLead(lead: Lead) {
     opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setSelected(lead);
@@ -285,15 +287,21 @@ export function CrmApp() {
   if (auth === "loading") return <main className="loading-screen"><LoaderCircle className="spin" /><Text>Preparando seu CRM…</Text></main>;
 
   return (
-    <div className="app-shell">
-      <header className="app-header">
-        <div className="brand"><div className="brand-mark small"><Building2 size={21} /></div><div><strong>Prospect CRM</strong><span>Prospecção multicanal</span></div></div>
-        <div className="header-actions"><span className={`database-badge db-${database}`}>{database === "oracle" ? "Oracle Cloud" : database === "supabase-transition" ? "Supabase · transição" : "Demonstração"}</span><Button variant="ghost" onClick={loadLeads}><RefreshCw size={16} /> Atualizar</Button>{!UI_PREVIEW_MODE && <Button variant="ghost" color="gray" onClick={async () => { await api("/api/auth/logout", { method: "POST" }); setAuth("no"); }}><LogOut size={16} /> Sair</Button>}</div>
-      </header>
-      <main className="content">
-        <nav className="main-nav" aria-label="Navegação principal"><button className={view === "overview" ? "active" : ""} aria-current={view === "overview" ? "page" : undefined} onClick={() => setView("overview")}><LayoutDashboard size={17} /> Visão geral</button><button className={view === "reports" ? "active" : ""} aria-current={view === "reports" ? "page" : undefined} onClick={() => setView("reports")}><BarChart3 size={17} /> Relatórios</button><button className={view === "followups" ? "active" : ""} aria-current={view === "followups" ? "page" : undefined} onClick={() => setView("followups")}><CalendarDays size={17} /> Follow-ups</button><button className={view === "pierre" ? "active" : ""} aria-current={view === "pierre" ? "page" : undefined} onClick={() => setView("pierre")}><PlugZap size={17} /> Pierre</button></nav>
-        {view !== "overview" && <>{view === "reports" && <Reports leads={leads} />}{view === "followups" && <FollowUps leads={leads} onOpen={openLead} />}{view === "pierre" && <PierrePanel />}</>}
-        {view === "overview" && <><section className="hero-row"><div><Text color="gray">Bom trabalho, Arthur</Text><Heading size="7">Pipeline de prospecção</Heading><Text color="gray">Só entram empresas com ao menos um canal de contato utilizável.</Text></div><Button size="3" onClick={() => { setView("overview"); setPipelineTab("import"); }}><Plus size={18} /> Importar do Apify</Button></section>
+    <div className="app-shell pierre-shell">
+      <aside className="pierre-sidebar">
+        <div className="pierre-brand"><div className="brand-mark small"><Building2 size={19} /></div><strong>prospect</strong></div>
+        <span className="pierre-sidebar-label">OPERAÇÃO COMERCIAL</span>
+        <nav className="main-nav pierre-nav" aria-label="Navegação principal"><button className={view === "overview" ? "active" : ""} aria-current={view === "overview" ? "page" : undefined} onClick={() => setView("overview")}><LayoutDashboard size={17} /> Visão geral</button><button className={view === "pipeline" ? "active" : ""} aria-current={view === "pipeline" ? "page" : undefined} onClick={() => { setView("pipeline"); setPipelineTab("list"); }}><Users size={17} /> Leads</button><button className={view === "pipeline" && pipelineTab === "kanban" ? "active" : ""} onClick={() => { setView("pipeline"); setPipelineTab("kanban"); }}><ArrowRight size={17} /> Pipeline</button><button className={view === "followups" ? "active" : ""} aria-current={view === "followups" ? "page" : undefined} onClick={() => setView("followups")}><CalendarDays size={17} /> Follow-ups</button><button className={view === "reports" ? "active" : ""} aria-current={view === "reports" ? "page" : undefined} onClick={() => setView("reports")}><BarChart3 size={17} /> Relatórios</button><button className={view === "pierre" ? "active" : ""} aria-current={view === "pierre" ? "page" : undefined} onClick={() => setView("pierre")}><Sparkles size={17} /> Pierre · conceito</button></nav>
+        <div className="pierre-demo-note"><Info size={16} /><strong>Dados demonstrativos</strong><span>Visão estática · sem automação</span></div>
+      </aside>
+      <section className="pierre-workspace">
+        <header className="app-header pierre-header">
+          <div><span className="pierre-breadcrumb">VISÃO GERAL / PIPELINE</span><h1>O que merece atenção</h1><p>Leituras operacionais para priorizar o próximo passo.</p></div>
+          <div className="header-actions"><Button variant="ghost" onClick={loadLeads}><RefreshCw size={16} /> Atualizar</Button>{!UI_PREVIEW_MODE && <Button variant="ghost" color="gray" onClick={async () => { await api("/api/auth/logout", { method: "POST" }); setAuth("no"); }}><LogOut size={16} /> Sair</Button>}</div>
+        </header>
+      <main className="content pierre-content">
+        {view !== "overview" && view !== "pipeline" && <>{view === "reports" && <Reports leads={leads} />}{view === "followups" && <FollowUps leads={leads} onOpen={openLead} />}{view === "pierre" && <PierrePanel />}</>}
+        {view === "overview" && <><section className="hero-row pierre-overview-heading"><div><span className="sr-only">Pipeline de prospecção</span><Text color="gray">Dados demonstrativos · indicadores operacionais</Text></div><Button size="3" onClick={() => { setView("pipeline"); setPipelineTab("import"); }}><Plus size={18} /> Importar do Apify</Button></section>
         {error && <Callout.Root color="red"><Callout.Icon><X size={16} /></Callout.Icon><Callout.Text>{error}</Callout.Text></Callout.Root>}
         <section className="stats-grid">
           <Card><Text color="gray">Leads válidos</Text><Heading size="8">{stats.total}</Heading><span className="stat-note">com canal disponível</span></Card>
@@ -301,6 +309,12 @@ export function CrmApp() {
           <Card><Text color="gray">Follow-ups</Text><Heading size="8">{stats.followups}</Heading><span className="stat-note">pendentes ou vencidos</span></Card>
           <Card><Text color="gray">Reuniões</Text><Heading size="8">{stats.reunioes}</Heading><span className="stat-note">no pipeline</span></Card>
         </section>
+        <section className="pierre-dashboard-grid">
+          <article className="pierre-funnel"><div className="card-heading"><div><h2>Funil de conversão</h2><span>Dados demonstrativos · distribuição por estágio</span></div><span className="pierre-filter"><SlidersHorizontal size={15} /> Origem: todas</span></div><div className="pierre-funnel-list">{pipelineSnapshot.map((stage) => <div className="pierre-funnel-row" key={stage.label}><span>{stage.label}</span><b>{stage.count}</b><i><em style={{ width: `${Math.max(4, stage.count / snapshotMax * 100)}%` }} /></i></div>)}</div></article>
+          <aside className="pierre-sidepanels"><article className="pierre-followups"><div className="card-heading"><div><h2>Follow-ups</h2><span>Dados demonstrativos</span></div></div>{upcomingFollowUps.map((lead) => <button key={lead.id} onClick={() => openLead(lead)}><i /><span><strong>{lead.name}</strong><small>{lead.nextFollowUpAt ? new Date(lead.nextFollowUpAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "Próximo contato"}</small></span></button>)}{!upcomingFollowUps.length && <p>Nenhum follow-up agendado.</p>}</article><article className="pierre-gmb"><div className="card-heading"><h2>Assistente GMB</h2><span>CONCEITO</span></div><p>Orientação demonstrativa para o pipeline atual.</p><small>Não envia mensagens nem executa ações.</small></article></aside>
+        </section>
+        <p className="pierre-footer-note">Dados demonstrativos em todo o painel · nenhuma automação de contato, banco ou assistente funcional.</p></>}
+        {view === "pipeline" && <><section className="hero-row"><div><Text color="gray">Pipeline de prospecção</Text><Heading size="7">Leads e estágios</Heading><Text color="gray">Só entram empresas com ao menos um canal de contato utilizável.</Text></div><Button size="3" onClick={() => setPipelineTab("import")}><Plus size={18} /> Importar do Apify</Button></section>
         <Tabs.Root className="tabs-root" value={pipelineTab} onValueChange={setPipelineTab}>
           <div className="toolbar-row">
             <Tabs.List className="tabs-list"><Tabs.Trigger value="kanban"><LayoutDashboard size={16} /> Kanban</Tabs.Trigger><Tabs.Trigger value="list"><List size={16} /> Lista</Tabs.Trigger><Tabs.Trigger value="import"><Plus size={16} /> Importar</Tabs.Trigger></Tabs.List>
@@ -318,6 +332,7 @@ export function CrmApp() {
           <Tabs.Content value="import"><ImportPanel onImported={loadLeads} /></Tabs.Content>
         </Tabs.Root></>}
       </main>
+      </section>
       <LeadDialog key={selected?.id || "none"} lead={selected} onClose={() => setSelected(null)} onCloseAutoFocus={(event) => { event.preventDefault(); opener.current?.focus(); }} onSaved={(saved) => { setLeads((current) => current.map((lead) => lead.id === saved.id ? saved : lead)); setSelected(saved); }} />
     </div>
   );
